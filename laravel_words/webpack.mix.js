@@ -1,4 +1,5 @@
 const mix = require('laravel-mix');
+const tailwindcss = require('tailwindcss');
 
 /*
  |--------------------------------------------------------------------------
@@ -11,5 +12,26 @@ const mix = require('laravel-mix');
  |
  */
 
+mix.webpackConfig({
+    devServer: {
+        host: '0.0.0.0',
+        port: 8080
+    },
+    watchOptions: {
+        poll: 2000,
+        ignored: /node_modules/
+    }
+});
+
 mix.js('resources/js/app.js', 'public/js')
-    .sass('resources/sass/app.scss', 'public/css');
+    .sass('resources/sass/app.scss', 'public/css')
+    .options({
+        postCss: [
+            tailwindcss('tailwind.config.js'),
+        ],
+        processCssUrls: false
+    });
+
+if (mix.inProduction()) {
+    mix.version();
+}

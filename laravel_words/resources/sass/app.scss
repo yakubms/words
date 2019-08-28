@@ -1,8 +1,10 @@
-// Fonts
-@import url('https://fonts.googleapis.com/css?family=Nunito');
+@tailwind base;
+/* Preflight will be injected here */
 
-// Variables
-@import 'variables';
+@tailwind components;
 
-// Bootstrap
-@import '~bootstrap/scss/bootstrap';
+@tailwind utilities;
+
+a {
+    text-decoration: none;
+}
