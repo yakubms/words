@@ -7,6 +7,10 @@ import Words from './components/Words';
 export default {
     linkActiveClass: 'font-bold',
     mode: 'history',
+    scrollBehavior(to, from, savedPosition) {
+        const selector = location.hash
+        return selector ? { selector } : { x: 0, y: 0 }
+    },
     routes: [{
             path: '/',
             component: Home
@@ -17,10 +21,12 @@ export default {
         },
         {
             path: '/exam',
+            name: 'exam',
             component: Exam
         },
         {
             path: '/words',
+            name: 'words',
             component: Words
         },
         {

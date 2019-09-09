@@ -16,6 +16,20 @@ class Word extends Model
         return $this->hasMany(Sense::class, 'wordid');
     }
 
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class);
+    }
+
+    public function wordId($lemma)
+    {
+        $word = $this->whereLemma($lemma);
+        if (!$word) {
+            return false;
+        }
+        return $word->wordid;
+    }
+
     public function whereLemma($lemma)
     {
         try {
@@ -82,5 +96,10 @@ class Word extends Model
     public function getJpDefinitions($lemma)
     {
         return $this->getDefinitions($lemma, 'jpn');
+    }
+
+    public function isCorrect($lemma, $answer)
+    {
+        return $this->getEnDefinitions($lemma)->first() == $answer;
     }
 }

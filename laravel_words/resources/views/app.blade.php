@@ -1,59 +1,83 @@
 <!doctype html>
 <html lang="ja">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Tango</title>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Tango
+    </title>
     <link href="{{ mix('css/app.css') }}" rel="stylesheet">
-    </head>
-    <body>
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
- <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                        @csrf
-                                    </form>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
-
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}">Register</a>
-                        @endif
-                    @endauth
-                </div>
-            @endif
-
-        <div id="app">
-            <main class="flex">
-                <aside class="w-1/5">
-                    <section class="mb-8">
-                        <h5 class="uppercase font-bold mb-4">メニュー</h5>
-
-                        <ul class="list-reset">
-                        <li class="text-sm pb-4"><router-link to="/" exact>ホーム</router-link></li>
-                        <li class="text-sm pb-4"><router-link to="about">このサイトについて</router-link></li>
-                        <li class="text-sm pb-4"><router-link to="exam">テストを受ける</router-link></li>
-                    @auth
-                        <li class="text-sm pb-4"><router-link to="study">復習する</router-link></li>
-                        <li class="text-sm pb-4"><router-link to="words">単語</router-link></li>
-                    @endauth
-                        </ul>
-                    </section>
-                </aside>
-
-                <div class="primary flex-1">
-                    <router-view></router-view>
-                </div>
-            </main>
+</head>
+<body>
+    <div id="app">
+      <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://bulma.io">
+                <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">
+            </a>
+            <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                <span aria-hidden="true">
+                </span>
+                <span aria-hidden="true">
+                </span>
+                <span aria-hidden="true">
+                </span>
+            </a>
         </div>
-        <script src="{{ mix('js/app.js') }}"></script>
-    </body>
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">
+            <router-link class="navbar-item" to="/" exact>ホーム
+            </router-link>
+            <router-link class="navbar-item" to="about">このサイトについて
+            </router-link>
+            <router-link class="navbar-item" to="exam">テストを受ける
+            </router-link>
+            @auth
+            <router-link class="navbar-item" to="study">学習
+            </router-link>
+            <router-link class="navbar-item" to="words">単語帳
+            </router-link>
+            @endauth
+        </div>
+        <div class="navbar-end">
+          @auth
+          <a class="navbar-item" href="{{ url('/home') }}">ホーム
+          </a>
+          <a class="navbar-item" href="{{ route('logout') }}"
+          onclick="event.preventDefault();
+          document.getElementById('logout-form').submit();">
+          {{ __('ログアウト') }}
+      </a>
+      <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+    @else
+    <div class="navbar-item">
+        <div class="buttons">
+          <a class="button is-primary" href="{{ route('register') }}">
+            <strong>新規登録
+            </strong>
+        </a>
+        <a class="button is-light" href="{{ route('login') }}">
+            ログイン
+        </a>
+    </div>
+</div>
+@endauth
+</div>
+</div>
+</nav>
+<div>
+    <router-view>
+    </router-view>
+</div>
+</div>
+<script>
+    window.Laravel = {!! json_encode([
+        'apiToken' => \Auth::user()->api_token ?? null
+    ]) !!};
+</script>
+<script src="{{ mix('js/app.js') }}">
+</script>
+</body>
 </html>

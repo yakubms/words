@@ -72,6 +72,7 @@ class RegisterController extends Controller
             'userid' => $data['userid'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'api_token' => Str::random(80),
         ]);
     }
 }

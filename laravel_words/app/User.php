@@ -16,7 +16,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'userid', 'email', 'password',
+        'name', 'userid', 'email', 'password', 'api_token'
     ];
 
     /**
@@ -25,7 +25,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'api_token'
     ];
 
     /**
@@ -36,4 +36,33 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    public function tasks()
+    {
+        return $this->hasManyThrough(
+            Task::class,
+            Project::class,
+            'owner_id'
+        );
+    }
+
+    public function activeProject()
+    {
+        if ($project = $this->projects->where('is_active')->first()) {
+            return $project->id;
+        }
+        return $this->projects->filter(function ($project) {
+            return $project->size != $project->tasks->count();
+        })->first()->id;
+    }
+
+    public function hasDuplicateWord($wordId)
+    {
+        return $this->tasks->contains('word_id', $wordId);
+    }
 }
