@@ -9,8 +9,14 @@ class WordsQuizController extends Controller
 {
     public function show($lemma, Word $word)
     {
+        $examples = $word->getEnExamples($lemma);
+        if (!$examples) {
+            return [ 'error' => 'not found' ];
+        }
+        $level = (int) floor($word->getLevel($lemma) / 10) + 1;
         // need validation, trimming...
-        return $word->getEnExamples($lemma) ?: [ 'error' => 'not found' ];
+        return ['level' => $level,
+                'examples' => $examples];
     }
 
     public function generate(Request $request, Word $word)

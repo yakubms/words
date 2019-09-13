@@ -1,14 +1,9 @@
 <template>
     <div>
-        <h1 class="title">復習</h1>
-        <p>単語帳</p>
-        <p>覚えていない/覚えている/全部</p>
-        <p>英英</p>
-        <p>出題数</p>
-        <p>選択肢の数</p>
+        <h1 class="title">単語検索</h1>
         <form @submit.prevent="search">
             <div class="field is-grouped">
-                <label class="label" for="name">単語検索</label>
+                <label class="label" for="name">単語を入力</label>
                 <div class="control">
                     <input type="text" class="input" name="name" placeholder="input a word" v-model="searchWord" @input="clearErrors" required>
                 </div>

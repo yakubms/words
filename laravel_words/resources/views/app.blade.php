@@ -12,9 +12,6 @@
     <div id="app">
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
-            <a class="navbar-item" href="https://bulma.io">
-                <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">
-            </a>
             <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
                 <span aria-hidden="true">
                 </span>
@@ -28,14 +25,15 @@
           <div class="navbar-start">
             <router-link class="navbar-item" to="/" exact>ホーム
             </router-link>
-            <router-link class="navbar-item" to="about">このサイトについて
-            </router-link>
-            <router-link class="navbar-item" to="exam">テストを受ける
+
+            <router-link class="navbar-item" to="/exam">テストを受ける
             </router-link>
             @auth
-            <router-link class="navbar-item" to="study">学習
+            <router-link class="navbar-item" to="/search">単語検索
             </router-link>
-            <router-link class="navbar-item" to="words">単語帳
+            <router-link class="navbar-item" to="/study">復習
+            </router-link>
+            <router-link class="navbar-item" to="/words">単語帳
             </router-link>
             @endauth
         </div>

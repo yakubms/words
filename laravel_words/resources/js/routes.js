@@ -1,8 +1,11 @@
 import Home from './components/Home';
 import About from './components/About';
 import Exam from './components/Exam';
+import Search from './components/Search';
 import Study from './components/Study';
 import Words from './components/Words';
+import Edit from './components/Edit';
+import NotFound from './components/NotFound';
 
 export default {
     linkActiveClass: 'font-bold',
@@ -25,13 +28,27 @@ export default {
             component: Exam
         },
         {
+            path: '/search',
+            component: Search
+        },
+        {
+            path: '/study',
+            component: Study
+        },
+        {
             path: '/words',
             name: 'words',
             component: Words
         },
         {
-            path: '/study',
-            component: Study
+            path: '/edit/:id+',
+            name: 'edit',
+            component: Edit,
+            props: true
+        },
+        {
+            path: '*',
+            component: NotFound,
         },
     ]
 }

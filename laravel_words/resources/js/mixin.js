@@ -6,7 +6,7 @@ export const mixin = {
             //         return null;
             //     }
             // }
-            console.log('posting...');
+            console.log('sending request...');
             return new Promise((resolve, reject) => {
                 axios[request](endpoint, data)
                     .then(response => {
@@ -29,8 +29,14 @@ export const mixin = {
             });
         },
         post(endpoint, data) {
-            console.log('hogehoge');
             this.submitRequest('post', endpoint, data);
+        },
+        patch(endpoint, data) {
+            this.submitRequest('patch', endpoint, data);
+        },
+        delete(endpoint, data) {
+            console.log('deleting...');
+            this.submitRequest('delete', endpoint, { data: data });
         },
         record(data) {
             console.log(data);
@@ -38,9 +44,10 @@ export const mixin = {
                 this.errors.record(data.error);
                 return false;
             }
-            this.projects = data;
+            let field = Object.keys(data);
+            this[field] = data[field];
+            // this.projects = data;
         }
-
     },
     mounted() {
         console.log('mixin mounted');

@@ -8,6 +8,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class WordsApiTest extends TestCase
 {
+    /** @test */
+    public function it_true()
+    {
+        $this->assertTrue(true);
+    }
     // /** @test */
     // public function it_generates_random_words()
     // {
