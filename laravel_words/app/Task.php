@@ -8,7 +8,7 @@ class Task extends Model
 {
     protected $fillable = ['project_id', 'word_id', 'is_complete'];
     protected $appends = ['level', 'lemma'];
-    protected $hidden = ['word', 'project_id'];
+    protected $hidden = ['word', 'project_id', 'laravel_through_key'];
 
     public function project()
     {
@@ -35,6 +35,16 @@ class Task extends Model
         return $this->word->level;
     }
 
+    public function enDefinitions()
+    {
+        return $this->word->enDefinitions();
+    }
+    public function jpDefinitions()
+    {
+        return $this->word->jpDefinitions();
+    }
+
+
     // public function getMeaningAttribute()
     // {
     //     return $this->word->enDefinitions()->first();
@@ -42,6 +52,6 @@ class Task extends Model
 
     // public function getMeaningJpAttribute()
     // {
-    //     return $this->word()->getJpDefinitions()->first();
+    //     return $this->word->jpDefinitions()->first();
     // }
 }

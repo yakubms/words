@@ -30,7 +30,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr @click="swtichActive(project.id)" v-for="(project, index) in projects" :key="index" :class="isActive(project.id)">
+                    <tr @click="swtichActive(project)" v-for="(project, index) in projects" :key="index" :class="isActive(project)">
                         <td @click.self.stop="toggleDelete(project.id)"><label class="checkbox" :for="project.id">
                                 <input type="checkbox" :id="project.id" :value="project.id" v-model="deleteProjects">{{ index + 1 }}
                             </label></td>
@@ -103,6 +103,14 @@ export default {
                 return;
             }
             return this.projects.length;
+        },
+        activeProject() {
+            let found = this.projects.find(el =>
+                el.is_active == true);
+            if (!found) {
+                return;
+            }
+            return found.id;
         }
     },
     data() {
@@ -111,7 +119,6 @@ export default {
             count: '',
             name: '',
             size: 200,
-            activeProject: '',
             projects: [],
             deleteProjects: [],
             allowDuplicate: false,
@@ -128,9 +135,6 @@ export default {
             })
             swal("新しい単語帳を作成しました。");
         },
-        show() {
-
-        },
         record(data) {
             // console.log(data);
             if (data.error) {
@@ -139,8 +143,10 @@ export default {
             }
             // console.log(data);
             this.projects = data.projects;
+            this.$ls.set('projects', this.projects, 60 * 60 * 1000);
             if (data.level) {
                 this.level = data.level;
+                this.$ls.set('level', this.level, 60 * 60 * 1000);
             }
             this.activeProject = this.getActiveProject();
         },
@@ -150,24 +156,30 @@ export default {
             }
             return parseInt(100 * project.task_complete_count / project.task_count) + '%';
         },
-        getActiveProject() {
-            let found = this.projects.find(el =>
-                el.is_active == 1);
-            if (found) {
-                return found.id;
-            }
-        },
-        isActive(id) {
-            if (this.activeProject == id) {
+        // getActiveProject() {
+        //     let found = this.projects.find(el =>
+        //         el.is_active == 1);
+        //     if (found) {
+        //         return found.id;
+        //     }
+        // },
+        isActive(project) {
+            if (project.is_active) {
                 return { 'has-background-warning': true };
             }
         },
-        swtichActive(id) {
-            if (this.activeProject == id) {
+        swtichActive(project) {
+            if (this.activeProject == project.id) {
                 return;
             }
-            axios.patch('/api/projects/', { active: id });
-            this.activeProject = id;
+            let found = this.projects.find(el =>
+                el.id == this.activeProject);
+            found.is_active = false;
+            axios.patch('/api/projects/', { active: project.id });
+            found = this.projects.find(el =>
+                el.id == project.id);
+            found.is_active = true;
+            this.$ls.set('projects', this.projects, lsExpiryTime);
         },
         toggleDelete(id) {
             let index = this.deleteProjects.findIndex(el => el == id);
@@ -222,12 +234,15 @@ export default {
         },
         getEditLink(id) {
             return '/edit/' + id;
-        }
+        },
     },
     mounted() {
-        if (!this.projects.length) {
-            this.get('/api/projects');
+        if (this.$ls.get('projects')) {
+            this.projects = this.$ls.get('projects');
+            this.level = this.$ls.get('level');
+            return;
         }
+        this.get('/api/projects');
     }
 }
 

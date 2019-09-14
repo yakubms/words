@@ -18,6 +18,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::get('words', 'WordsQuizController@generate');
+Route::middleware('auth:api')->get('words/quiz', 'WordsQuizController@quiz');
 Route::post('words', 'WordsQuizController@score');
 Route::middleware('auth:api')->get('words/{lemma}', 'WordsQuizController@show');
 Route::middleware('auth:api')->get('projects', 'ProjectsController@index');

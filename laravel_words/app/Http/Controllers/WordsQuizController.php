@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 
 class WordsQuizController extends Controller
 {
+    const LEVEL_MAX = 556;
+
     public function show($lemma, Word $word)
     {
         $examples = $word->getEnExamples($lemma);
@@ -47,6 +49,77 @@ class WordsQuizController extends Controller
         });
 
         return $quiz;
+    }
+
+    public function quiz(Request $request, Word $word)
+    {
+        // require validation
+        $user = auth()->user();
+        $projectId = $request->book;
+        $range = $this->getRange($request->range);
+
+        $questions = $request->questions;
+        $language = $request->lang;
+        $choices = $request->choices;
+
+        $level = $request->level;
+
+        $tasks = $this->getTasks($user, $projectId);
+
+        if (! $tasks || ! $tasks->count()) {
+            return ['error' => '単語帳に単語が登録されていません。'];
+        }
+
+        $tasks = $tasks->whereIn('is_complete', $range)
+                        ->random($questions);
+
+        $quiz = $tasks->map(function ($task) use ($word, $tasks, $language, $level, $choices) {
+            $definition = $this->getDefinition($task, $language);
+            $dummies = $this->generateDummies($word, $choices - 1, $language, $level);
+
+            return [
+                'id' => $task->id,
+                'lemma' => $task->lemma,
+                'level' => $task->level,
+                'quiz' => $dummies->push($definition)->shuffle()];
+        });
+
+        return ['questions' => $quiz];
+    }
+
+    public function getRange($range)
+    {
+        switch ($range) {
+            case 'ongoing':
+                return [0];
+            case 'complete':
+                return [1];
+            default:
+                return [0, 1];
+        }
+    }
+
+    public function getTasks($user, $id)
+    {
+        if ($id == 'all') {
+            return $user->tasks;
+        }
+        return $user->projects->find($id)->tasks;
+    }
+
+    public function getDefinition($task, $language)
+    {
+        if ($language == 'eng') {
+            return $task->enDefinitions()->first();
+        }
+        return $task->jpDefinitions()->first();
+    }
+
+    public function generateDummies($word, $choices, $language, $level)
+    {
+        $minLevel = ($level - 20 > 0) ? $level : 1;
+        $maxLevel = ($level + 20 < self::LEVEL_MAX) ? $level : self::LEVEL_MAX;
+        return $word->generateDummies($choices, $language, $minLevel, $maxLevel);
     }
 
     public function score(Request $json, Word $word)

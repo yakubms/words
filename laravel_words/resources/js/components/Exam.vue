@@ -36,7 +36,7 @@
                     </ol>
                 </li>
             </ul>
-            <button class="flex-shrink-0 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">送信</button>
+            <button class="button is-primary" type="submit">送信</button>
         </form>
     </div>
 </template>

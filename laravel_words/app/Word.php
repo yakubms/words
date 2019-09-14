@@ -34,15 +34,36 @@ class Word extends Model
         return $this->belongsToMany(Task::class);
     }
 
-    // public function getEnDefinitionAttribute()
-    // {
-    //     return $this->synsets->where('lang', 'ENG')->pluck('def');
-    // }
+    public function enDefinitions()
+    {
+        return $this->synsets
+            ->where('lang', 'eng')
+            ->pluck('def');
+    }
 
-    // public function getJpDefinitionAttribute()
-    // {
-    //     return $this->synsets->where('lang', 'jpn')->pluck('def');
-    // }
+    public function jpDefinitions()
+    {
+        return $this->synsets
+            ->where('lang', 'jpn')
+            ->pluck('def');
+    }
+
+    public function definition($lang)
+    {
+        if ($lang == 'eng') {
+            return $this->enDefinitions()->first();
+        }
+        return $this->jpDefinitions()->first();
+    }
+
+    public function generateDummies($choices, $language, $minLevel, $maxLevel)
+    {
+        return $this->whereBetween('level', [$minLevel, $maxLevel])
+            ->get()->random($choices)
+            ->map(function ($el) use ($language) {
+                return $el->definition($language);
+            });
+    }
 
     public function wordIds($lemma)
     {

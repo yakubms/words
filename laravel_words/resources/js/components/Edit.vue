@@ -3,7 +3,6 @@
         <h1 class="title">単語帳を編集する</h1>
         <router-link to="/words">戻る
         </router-link>
-        <h2>この単語帳をエクスポートする</h2>
         <form v-if="taskLength" @submit.prevent="onExport">
             <div class="field">
                 <div class="control">

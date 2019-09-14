@@ -23,7 +23,7 @@
         </div>
         <div id="navbarBasicExample" class="navbar-menu">
           <div class="navbar-start">
-            <router-link class="navbar-item" to="/" exact>ホーム
+            <router-link class="navbar-item" to="/about">このサイトについて
             </router-link>
 
             <router-link class="navbar-item" to="/exam">テストを受ける
@@ -39,8 +39,8 @@
         </div>
         <div class="navbar-end">
           @auth
-          <a class="navbar-item" href="{{ url('/home') }}">ホーム
-          </a>
+            <router-link class="navbar-item" to="/">ホーム
+            </router-link>
           <a class="navbar-item" href="{{ route('logout') }}"
           onclick="event.preventDefault();
           document.getElementById('logout-form').submit();">

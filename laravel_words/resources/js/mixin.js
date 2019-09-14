@@ -1,25 +1,14 @@
 export const mixin = {
     methods: {
         submitRequest(request, endpoint, data) {
-            // for (let field in data) {
-            //     if (!data[field]) {
-            //         return null;
-            //     }
-            // }
-            console.log('sending request...');
             return new Promise((resolve, reject) => {
                 axios[request](endpoint, data)
                     .then(response => {
                         console.log('success.');
                         this.record(response.data);
-                        // this.isLoading = false;
-                        // this.isTakingExam = true;
                     })
                     .catch(error => {
                         console.log('failed.');
-                        // this.record(response.data);
-                        // reject(error.response);
-                        // this.isLoading = false;
                     });
             });
         },
@@ -45,11 +34,9 @@ export const mixin = {
                 return false;
             }
             let field = Object.keys(data);
+            // console.log(field);
             this[field] = data[field];
-            // this.projects = data;
+            // console.log('recorded');
         }
-    },
-    mounted() {
-        console.log('mixin mounted');
     }
 }
