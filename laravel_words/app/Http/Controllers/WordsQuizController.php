@@ -15,7 +15,7 @@ class WordsQuizController extends Controller
         if (!$examples) {
             return [ 'error' => 'not found' ];
         }
-        $level = (int) floor($word->getLevel($lemma) / 10) + 1;
+        $level = (int) floor($word->level($lemma) / 10) + 1;
         // need validation, trimming...
         return ['level' => $level,
                 'examples' => $examples];
@@ -24,31 +24,76 @@ class WordsQuizController extends Controller
     public function generate(Request $request, Word $word)
     {
         // need validation
-        $level = $request->level;
+        $level = (int) $request->level;
         $language = $request->language;
 
-        $collection = $word->betweenLevel($level, 20);
+        $minLevel = ($level - 10 > 0) ? $level - 10 : 1;
+        $maxLevel = ($level + 10 < self::LEVEL_MAX) ? $level + 10 : self::LEVEL_MAX;
+        $words = $word->randomWords(10, $minLevel, $maxLevel);
 
-        $quiz = $collection->random(10)->map(function ($item) use ($collection, $language) {
-            if ($language == 'eng') {
-                $definition = $item->getEnDefinitions($item->lemma)->first();
-            } else {
-                $definition = $item->getJpDefinitions($item->lemma)->first();
-            }
-            $dummies = $collection->where('lemma', '<>', $item->lemma)->random(5)
-                ->map(function ($el) use ($language) {
-                    if ($language == 'eng') {
-                        return $el->getEnDefinitions($el->lemma)->first();
-                    }
-                    return $el->getJpDefinitions($el->lemma)->first();
-                });
+        $quiz = $words->map(function ($word) use ($language, $level) {
+            $definition = $this->getDefinition($word, $language);
+            $dummies = $this->generateDummies($word, 5, $language, $level);
             return [
-                'lemma' => $item->lemma,
-                'level' => $item->level,
+                'id' => 0,
+                'lemma' => $word->lemma,
+                'level' => $word->level,
                 'quiz' => $dummies->push($definition)->shuffle()];
         });
 
-        return $quiz;
+        return ['questions' => $quiz];
+    }
+
+    public function score(Request $request, Word $word)
+    {
+        // need validation
+        $level = $request->level;
+        $answers = $request->answers;
+
+        $score = $this->estimate($level, $answers, $word);
+
+        return ['level' => $score];
+    }
+
+    public function estimate($level, $answers, Word $word)
+    {
+        $score = $level;
+        foreach ($answers as $answer) {
+            $score += $this->calculateScore($answer, $level, $word);
+            // dump($score);
+        }
+        if ($score > 0) {
+            return (int) $score;
+        }
+        return 1;
+    }
+
+    public function calculateScore($answer, $level, $word)
+    {
+        if (is_null($answer)) {
+            return -3;
+        }
+        $diff = $word->level($answer['lemma']) - $level;
+        if ($this->isCorrect($word, $answer)) {
+            return $this->onCorrect($diff);
+        }
+        return $this->onIncorrect($diff);
+    }
+
+    public function onCorrect($diff)
+    {
+        if ($diff < 0) {
+            return 3;
+        }
+        return (int) ($diff / 3);
+    }
+
+    public function onIncorrect($diff)
+    {
+        if ($diff < 0) {
+            return - (int) (abs($diff) * 0.8);
+        }
+        return - (int) ($diff / 3);
     }
 
     public function quiz(Request $request, Word $word)
@@ -63,28 +108,45 @@ class WordsQuizController extends Controller
         $choices = $request->choices;
 
         $level = $request->level;
-
         $tasks = $this->getTasks($user, $projectId);
 
         if (! $tasks || ! $tasks->count()) {
             return ['error' => '単語帳に単語が登録されていません。'];
         }
-
         $tasks = $tasks->whereIn('is_complete', $range)
                         ->random($questions);
 
-        $quiz = $tasks->map(function ($task) use ($word, $tasks, $language, $level, $choices) {
-            $definition = $this->getDefinition($task, $language);
-            $dummies = $this->generateDummies($word, $choices - 1, $language, $level);
-
-            return [
-                'id' => $task->id,
-                'lemma' => $task->lemma,
-                'level' => $task->level,
-                'quiz' => $dummies->push($definition)->shuffle()];
-        });
+        $quiz = $this->getQuiz($tasks, $word, $language, $level, $choices);
 
         return ['questions' => $quiz];
+    }
+
+    public function check(Request $request, Word $word)
+    {
+        // need validation
+        $user = auth()->user();
+        $answers = $request->answers;
+
+        $results = [];
+        foreach ($answers as $answer) {
+            $wordByLemma = $word->whereLemma($answer['lemma'])->first();
+            $results[] = [
+            'id' => $answer['id'],
+            'level' => $wordByLemma->level,
+            'meaning' => $wordByLemma->enExamples(),
+            'meaning_jp' => $wordByLemma->jpDefinitions(),
+            'lemma' => $answer['lemma'],
+            'isCorrect' => $this->isCorrect($word, $answer),
+            'isComplete' => $user->hasComplete($answer['id'])
+            ];
+        }
+
+        return ['results' => $results];
+    }
+
+    public function isCorrect($word, $answer)
+    {
+        return $word->isCorrect($answer['lemma'], $answer['answer']);
     }
 
     public function getRange($range)
@@ -107,6 +169,19 @@ class WordsQuizController extends Controller
         return $user->projects->find($id)->tasks;
     }
 
+    public function getQuiz($tasks, $word, $language, $level, $choices)
+    {
+        return $tasks->map(function ($task) use ($word, $tasks, $language, $level, $choices) {
+            $definition = $this->getDefinition($task, $language);
+            $dummies = $this->generateDummies($word, $choices - 1, $language, $level);
+            return [
+                'id' => $task->id,
+                'lemma' => $task->lemma,
+                'level' => $task->level,
+                'quiz' => $dummies->push($definition)->shuffle()];
+        });
+    }
+
     public function getDefinition($task, $language)
     {
         if ($language == 'eng') {
@@ -117,77 +192,6 @@ class WordsQuizController extends Controller
 
     public function generateDummies($word, $choices, $language, $level)
     {
-        $minLevel = ($level - 20 > 0) ? $level : 1;
-        $maxLevel = ($level + 20 < self::LEVEL_MAX) ? $level : self::LEVEL_MAX;
-        return $word->generateDummies($choices, $language, $minLevel, $maxLevel);
-    }
-
-    public function score(Request $json, Word $word)
-    {
-        // need validation later...
-        if (! $json->isJson()) {
-            return 'invalid request';
-        }
-        $collection = collect($json);
-        $level = $collection['level'];
-        $answers = $collection['answers'];
-
-        $score = $this->estimate($level, $answers, $word);
-
-        return $score;
-    }
-
-    public function estimate($level, $answers, Word $word)
-    {
-        $score = $level;
-        foreach ($answers as $answer) {
-            var_dump($score);
-            if (is_null($answer)) {
-                $score -= 3;
-                continue;
-            }
-            $diff = $word->getLevel($answer['lemma']) - $level;
-            if ($this->isCorrect($word, $answer)) {
-                $score = $this->onCorrect($diff, $score);
-                // if ($diff < 0) {
-                //     $score += 1;
-                //     continue;
-                // }
-                // $score += $diff / 5;
-                continue;
-            }
-            $score = $this->onIncorrect($diff, $score);
-
-            // if ($diff < 0) {
-            //     $score -= abs($diff) * 2;
-            //     continue;
-            // }
-            // $score -= $diff / 3;
-        }
-        if ($score > 0) {
-            return (int) $score;
-        }
-        return 1;
-    }
-
-    public function isCorrect($word, $answer)
-    {
-        return $word->isCorrect($answer['lemma'], $answer['answer']);
-    }
-
-    public function onCorrect($diff, $score)
-    {
-        if ($diff < 0) {
-            return $score + 3;
-        }
-        return $score + (int) ($diff / 3);
-    }
-
-    public function onIncorrect($diff, $score)
-    {
-        if ($diff < 0) {
-            return $score - (int) (abs($diff) * 0.8);
-        }
-        return $score - (int) ($diff / 3);
+        return $word->generateDummies($choices, $language, $level);
     }
 }

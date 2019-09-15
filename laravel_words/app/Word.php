@@ -34,10 +34,22 @@ class Word extends Model
         return $this->belongsToMany(Task::class);
     }
 
+    public function lemma($lemma)
+    {
+        return $this->whereLemma($lemma)->first();
+    }
+
     public function enDefinitions()
     {
         return $this->synsets
             ->where('lang', 'eng')
+            ->pluck('def');
+    }
+
+    public function enExamples()
+    {
+        return $this->synsets
+            ->where('lang', 'ENG')
             ->pluck('def');
     }
 
@@ -56,10 +68,10 @@ class Word extends Model
         return $this->jpDefinitions()->first();
     }
 
-    public function generateDummies($choices, $language, $minLevel, $maxLevel)
+    public function generateDummies($choices, $language, $level)
     {
-        return $this->whereBetween('level', [$minLevel, $maxLevel])
-            ->get()->random($choices)
+        return $this->whereLevel($level)
+            ->inRandomOrder()->take($choices)->get()
             ->map(function ($el) use ($language) {
                 return $el->definition($language);
             });
@@ -74,16 +86,9 @@ class Word extends Model
         return $word->get('wordid');
     }
 
-    public function betweenLevel($level, $diff)
+    public function randomWords($number, $minLevel, $maxLevel)
     {
-        $minLevel = $level - $diff > 0 ? $level - $diff : $level;
-        $maxLevel = $level + $diff;
-
-        try {
-            return $this->whereBetween('level', [$minLevel, $maxLevel])->get(['lemma', 'level']);
-        } catch (ModelNotFoundException $e) {
-            return false;
-        }
+        return $this->whereBetween('level', [$minLevel, $maxLevel])->inRandomOrder()->take($number)->get();
     }
 
     public function level($lemma)
@@ -135,6 +140,6 @@ class Word extends Model
 
     public function isCorrect($lemma, $answer)
     {
-        return $this->getEnDefinitions($lemma)->first() == $answer;
+        return trim($this->getEnDefinitions($lemma)->first()) == $answer;
     }
 }

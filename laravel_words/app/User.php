@@ -67,6 +67,11 @@ class User extends Authenticatable
         return false;
     }
 
+    public function hasComplete($taskId)
+    {
+        return $this->tasks->find($taskId)->is_complete;
+    }
+
     public function allTasks()
     {
         return $this->projects()->withTrashed()

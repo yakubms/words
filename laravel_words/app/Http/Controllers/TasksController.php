@@ -129,7 +129,7 @@ class TasksController extends Controller
             $activeProject = $this->createNextProjectWhenFull($user, $activeProject);
         }
 
-        $wordId = $word->wordId($lemma);
+        $wordId = $word->lemma($lemma)->id;
 
         // $user->hasDuplicateWord($wordId);
 

@@ -43,9 +43,9 @@
                 </div>
             </div>
             <div class="field">
-                <label class="label" for="choices">選択肢の数(3～10)</label>
+                <label class="label" for="choices">選択肢の数(3～9の間)</label>
                 <div class="control">
-                    <input type="number" v-model="studyOptions.choices" min="3" max="10" step="1" class="input" name="choices" placeholder="選択肢の数">
+                    <input type="number" v-model="studyOptions.choices" min="3" max="9" step="1" class="input" name="choices" placeholder="選択肢の数">
                 </div>
             </div>
             <div class="field">
@@ -57,11 +57,11 @@
         <p v-if="loading">Loading...</p>
         <form method="POST" v-if="loaded && !errors.length" @submit.prevent="submitAnswer" class="text-lg">
             <p>次の選択肢から最も意味の近いものを選んで下さい。分からない場合はチェックしなくても構いません。</p>
-            <p>キーボードでの選択方法：数字…選択肢を選択(0でスキップ)、Del…一つ戻る</p>
+            <p>キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
             <ul class="my-3">
-                <li :id="index" v-for="(question, index) in questions" :key="index">Q{{ index + 1 }}. {{ question.lemma }}
+                <li :id="index | questionId(index)" v-for="(question, index) in questions" :key="index">Q{{ index + 1 }}. {{ question.lemma }}
                     <ol class="list-decimal my-2">
-                        <li v-for="(el, key) in question.quiz"><label><input type="radio" :name="index" size="30" v-model="answers[index]" :value="answerData(index, key)" @change="setCurrent(index)">{{ el }}</label></li>
+                        <li v-for="(el, key) in question.quiz"><label>{{ key + 1 }}. <input type="radio" :name="index" size="30" v-model="answers[index]" :value="answerData(index, key)" @change="setCurrent(index)">{{ el }}</label></li>
                     </ol>
                 </li>
             </ul>
@@ -73,15 +73,14 @@
     </div>
 </template>
 <script>
+import { quizmixin } from '../quizmixin';
 import { mixin } from '../mixin';
 import swal from 'sweetalert';
 export default {
-    mixins: [mixin],
+    mixins: [mixin, quizmixin],
     data() {
         return {
             books: [],
-            questions: [],
-            answers: [],
             studyOptions: {
                 book: 'all',
                 questions: '5',
@@ -92,13 +91,12 @@ export default {
             },
             loading: false,
             loaded: false,
-            errors: []
+            errors: [],
+            answers: [],
+            results: []
         }
     },
     methods: {
-        answerData() {
-
-        },
         startStudy() {
             this.loading = true;
             this.$ls.set('studyOptions', this.studyOptions, LSMONTH * 2);
@@ -108,24 +106,21 @@ export default {
             this.loaded = true;
         },
         submitAnswer() {
-
+            console.log('submitting answer start');
+            let filledAnswers = this.fillBlankAnswers();
+            this.fetchResults(filledAnswers);
+            //     this.post('/api/words/quiz', {
+            //         answers: filledAnswers
+            //     });
         },
-        // record(data) {
-        // console.log(data);
-        // if (data.error) {
-        // this.errors.push(data.error);
-        // this.searchWord = '';
-        // return;
-        // }
-        // this.lemma = this.searchWord;
-        // this.searchWord = '';
-        // this.level = data.level;
-        // this.examples = data.examples;
-        // },
-        // clearErrors() {
-        // this.errors = [];
-        // },
-
+        async fetchResults(answers) {
+            let response = await axios.post('/api/words/quiz', {
+                answers: answers
+            });
+            console.log(response.data.results);
+            this.$ls.set('results', response.data.results, lsExpiryTime);
+            this.$router.push('/study/result');
+        },
         setBooks() {
             if (this.$ls.get('projects')) {
                 this.studyOptions.level = this.$ls.get('level');
@@ -144,12 +139,12 @@ export default {
         }
         this.setBooks();
 
-        if (!this.books) {
+        if (!this.books.length) {
             axios.get('/api/projects')
                 .then(response => {
                     console.log(response);
-                    this.$ls.set('projects', response.data.projects);
-                    this.$ls.set('level', response.data.projects);
+                    this.$ls.set('projects', response.data.projects, lsExpiryTime);
+                    this.$ls.set('level', response.data.level, lsExpiryTime);
                     this.setBooks();
                 });
         }

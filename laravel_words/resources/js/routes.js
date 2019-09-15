@@ -3,6 +3,7 @@ import About from './components/About';
 import Exam from './components/Exam';
 import Search from './components/Search';
 import Study from './components/Study';
+import StudyResult from './components/StudyResult';
 import Words from './components/Words';
 import Edit from './components/Edit';
 import NotFound from './components/NotFound';
@@ -34,6 +35,10 @@ export default {
         {
             path: '/study',
             component: Study
+        },
+        {
+            path: '/study/result',
+            component: StudyResult
         },
         {
             path: '/words',

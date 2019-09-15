@@ -9,6 +9,10 @@ export const mixin = {
                     })
                     .catch(error => {
                         console.log('failed.');
+                    })
+                    .finally(() => {
+                        this.isLoading = false;
+                        this.isLoaded = true;
                     });
             });
         },
