@@ -41,6 +41,14 @@ export const mixin = {
             // console.log(field);
             this[field] = data[field];
             // console.log('recorded');
+        },
+        async refreshProjects() {
+            if (this.$ls.get('projects')) {
+                return;
+            }
+            let response = await axios.get('/api/projects');
+            this.$ls.set('level', response.data.level, lsExpiryTime);
+            this.$ls.set('projects', response.data.projects, lsExpiryTime);
         }
     }
 }

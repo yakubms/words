@@ -129,7 +129,7 @@ class TasksController extends Controller
             $activeProject = $this->createNextProjectWhenFull($user, $activeProject);
         }
 
-        $wordId = $word->lemma($lemma)->id;
+        $wordId = $word->id($lemma);
 
         // $user->hasDuplicateWord($wordId);
 
@@ -139,6 +139,8 @@ class TasksController extends Controller
             'word_id' => $wordId,
             'is_complete' => 0
         ]);
+
+        return 'done';
     }
 
     /**
@@ -147,12 +149,12 @@ class TasksController extends Controller
      * @param  \App\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function show($lemma)
+    public function show($lemma, Word $word)
     {
         // require validation
         $user = auth()->user();
 
-        return (string) $user->hasDuplicateWord($lemma);
+        return (string) $user->hasDuplicateWord($word->id($lemma));
     }
 
     /**

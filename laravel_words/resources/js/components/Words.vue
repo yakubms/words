@@ -2,6 +2,7 @@
     <div>
         <h1 class="title">単語帳</h1>
         <p v-if="level">現在の英単語力：{{ level * 100 }}語</p>
+        <p>クリックでアクティブな単語帳を切り替えられます。</p>
         <form @submit.prevent="create">
             <div class="field is-grouped">
                 <label class="label" for="name">単語帳の名前（任意）</label>
@@ -31,7 +32,7 @@
                 </thead>
                 <tbody>
                     <tr @click="swtichActive(project)" v-for="(project, index) in projects" :key="index" :class="isActive(project)">
-                        <td @click.self.stop="toggleDelete(project.id)"><label class="checkbox" :for="project.id">
+                        <td @click.self.stop="toggleDelete(project.id)"><label class="checkbox" :for="project.id" @click.stop>
                                 <input type="checkbox" :id="project.id" :value="project.id" v-model="deleteProjects">{{ index + 1 }}
                             </label></td>
                         <td>{{ project.name }}</td>
@@ -108,7 +109,7 @@ export default {
             let found = this.projects.find(el =>
                 el.is_active == true);
             if (!found) {
-                return;
+                return null;
             }
             return found.id;
         }
@@ -156,13 +157,6 @@ export default {
             }
             return parseInt(100 * project.task_complete_count / project.task_count) + '%';
         },
-        // getActiveProject() {
-        //     let found = this.projects.find(el =>
-        //         el.is_active == 1);
-        //     if (found) {
-        //         return found.id;
-        //     }
-        // },
         isActive(project) {
             if (project.is_active) {
                 return { 'has-background-warning': true };
@@ -174,7 +168,9 @@ export default {
             }
             let found = this.projects.find(el =>
                 el.id == this.activeProject);
-            found.is_active = false;
+            if (found) {
+                found.is_active = false;
+            }
             axios.patch('/api/projects/', { active: project.id });
             found = this.projects.find(el =>
                 el.id == project.id);

@@ -39,6 +39,11 @@ class Word extends Model
         return $this->whereLemma($lemma)->first();
     }
 
+    public function id($lemma)
+    {
+        return $this->lemma($lemma)->wordid;
+    }
+
     public function enDefinitions()
     {
         return $this->synsets

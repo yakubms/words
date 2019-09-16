@@ -11,14 +11,16 @@ class WordsQuizController extends Controller
 
     public function show($lemma, Word $word)
     {
-        $examples = $word->getEnExamples($lemma);
-        if (!$examples) {
+        $enExamples = $word->lemma($lemma)->enExamples();
+        $jpDefinitions = $word->lemma($lemma)->jpDefinitions();
+        if (!$enExamples) {
             return [ 'error' => 'not found' ];
         }
         $level = (int) floor($word->level($lemma) / 10) + 1;
         // need validation, trimming...
         return ['level' => $level,
-                'examples' => $examples];
+                'examples' => $enExamples,
+                'meaningsJp' => $jpDefinitions];
     }
 
     public function generate(Request $request, Word $word)

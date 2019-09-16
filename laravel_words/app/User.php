@@ -92,22 +92,6 @@ class User extends Authenticatable
             ->get()->avg('level');
     }
 
-    // public function allCompleteTasks()
-    // {
-    //     return $this->projects()->withTrashed()
-    //         ->get()->flatMap(function ($project) {
-    //             return $project->tasks->where('is_complete', true);
-    //         })->unique('word_id');
-    // }
-
-    // public function userWordLevel()
-    // {
-    //     $tasks = $this->allCompleteTasks()->sortByDesc('level');
-    //     $count = $tasks->count();
-
-    //     return (int) $tasks->take(3000)->avg('level');
-    // }
-
     public function setActiveProject($projectId)
     {
         if ($active = $this->projects()->where('is_active', true)->first()) {
@@ -139,18 +123,19 @@ class User extends Authenticatable
 
     public function activeProjectId()
     {
-        if ($project = $this->projects->where('is_active')->first()) {
+        $availableProjects = $this->projects
+            ->filter(function ($project) {
+                return $project->room() > 0;
+            });
+        if (!count($availableProjects)) {
+            return null;
+        }
+        if ($project = $availableProjects
+            ->where('is_active')
+            ->first()) {
             return $project->id;
         }
-        $project =  $this->projects->filter(function ($project) {
-            return $project->size != $project->tasks->count();
-        })->first();
-
-        if ($project) {
-            return $project->id;
-        }
-
-        return null;
+        return $availableProjects->first()->id;
     }
 
     public function nextActiveProjectId($id)
@@ -174,9 +159,8 @@ class User extends Authenticatable
         return null;
     }
 
-    public function hasDuplicateWord($lemma)
+    public function hasDuplicateWord($wordId)
     {
-        $word = new Word;
-        return $this->tasks->contains('word_id', $word->wordId($lemma));
+        return $this->tasks->contains('word_id', $wordId);
     }
 }

@@ -19,6 +19,9 @@
             <ol class="menu-list column is-3">
                 <li v-for="example in examples">{{ example }}</li>
             </ol>
+            <ol class="menu-list column is-3">
+                <li v-for="meaningJp in meaningsJp">{{ meaningJp }}</li>
+            </ol>
             <form @submit.prevent="onStore">
                 <div class="field">
                     <div class="control">
@@ -48,6 +51,7 @@ export default {
             lemma: '',
             level: '',
             examples: [],
+            meaningsJp: [],
             errors: []
         }
     },
@@ -68,12 +72,13 @@ export default {
                 })
                 .catch(error => console.log(error));
         },
-        register() {
-            axios.post('/api/tasks/', { lemma: this.lemma });
+        async register() {
+            await axios.post('/api/tasks/', { lemma: this.lemma });
             swal('登録しました。');
+            this.refreshProjects();
         },
         onDuplicate() {
-            swal("この単語は登録済みですが登録しますか？", {
+            swal("この単語は単語帳に登録済みですが登録しますか？", {
                     buttons: {
                         not: "登録しない",
                         onduplicate: {
@@ -99,6 +104,7 @@ export default {
             this.searchWord = '';
             this.level = data.level;
             this.examples = data.examples;
+            this.meaningsJp = data.meaningsJp;
         },
         clearErrors() {
             this.errors = [];
