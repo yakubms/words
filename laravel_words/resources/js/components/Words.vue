@@ -168,7 +168,7 @@ export default {
             if (found) {
                 found.is_active = false;
             }
-            axios.patch('/api/projects/', { active: project.id });
+            axios.patch('/api/projects', { active: project.id });
             found = this.projects.find(el =>
                 el.id == project.id);
             found.is_active = true;

@@ -168,7 +168,7 @@ export default {
                 return;
             }
             found.is_complete = !found.is_complete;
-            this.patch('/api/tasks/', {
+            this.patch('/api/tasks', {
                 words: [e.row.id],
                 isComplete: e.row.is_complete
             });
@@ -230,14 +230,14 @@ export default {
             });
 
             if (value == 'oncomplete') {
-                let response = await axios.patch('/api/tasks', {
+                let response = await axios.patch('/api/tasks/', {
                     words: this.checkedWords,
                     isComplete: true
                 });
                 swal("学習済みにしました。");
             }
             if (value == 'ongoing') {
-                let respones = await axios.patch('/api/tasks', {
+                let respones = await axios.patch('/api/tasks/', {
                     words: this.checkedWords,
                     isComplete: false
                 });

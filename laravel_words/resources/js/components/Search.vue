@@ -75,7 +75,7 @@ export default {
                 .catch(error => console.log(error));
         },
         async register() {
-            await axios.post('/api/tasks/', { lemma: this.lemma });
+            await axios.post('/api/tasks', { lemma: this.lemma });
             swal('登録しました。');
             this.refreshProjects();
         },

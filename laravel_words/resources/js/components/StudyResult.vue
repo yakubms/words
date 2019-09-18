@@ -111,7 +111,7 @@ export default {
                 return;
             }
             found.isComplete = !found.isComplete;
-            this.patch('/api/tasks/', {
+            this.patch('/api/tasks', {
                 words: [found.id],
                 isComplete: found.isComplete
             });
