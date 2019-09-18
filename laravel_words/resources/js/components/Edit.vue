@@ -7,13 +7,15 @@
         <div v-if="errors.length" class="notification is-danger">{{ errors }}</div>
         <form v-if="taskLength" @submit.prevent="onExport">
             <div class="field">
-                <p>単語帳のエクスポート</p>
                 <div class="control">
-                    <select v-model="exportOption">
-                        <option value="all">全て</option>
-                        <option value="ongoing">学習中の単語のみ</option>
-                        <option value="complete">学習済みの単語のみ</option>
-                    </select>
+                    <label for="export">単語帳のエクスポート</label>
+                    <div class="select">
+                        <select id="export" v-model="exportOption">
+                            <option value="all">全て</option>
+                            <option value="ongoing">学習中の単語のみ</option>
+                            <option value="complete">学習済みの単語のみ</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="control">
                     <button type="submit" class="button is-info">この単語帳をエクスポートする</button>
