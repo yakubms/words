@@ -34,10 +34,31 @@ router.beforeEach((to, from, next) => {
 const app = new Vue({
     el: '#app',
     router: router,
+    computed: {
+        burgerClass() {
+            return {
+                'navbar-burger': true,
+                burger: true,
+                'is-active': this.isActive
+            }
+        },
+        navbarClass() {
+            return {
+                'navbar-menu': true,
+                'is-active': this.isActive
+            }
+        }
+    },
+    data: {
+        isActive: false
+    },
     methods: {
         clearStorage() {
             this.$ls.clear('level');
             this.$ls.clear('projects');
+        },
+        toggleBurger() {
+            this.isActive = !this.isActive;
         },
         onLogout() {
             this.clearStorage();

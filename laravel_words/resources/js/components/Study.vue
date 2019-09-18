@@ -57,7 +57,8 @@
         <p v-if="loading">Loading...</p>
         <form method="POST" v-if="loaded && !errors.length" @submit.prevent="submitAnswer" class="text-lg">
             <p>次の選択肢から最も意味の近いものを選んで下さい。分からない場合はチェックしなくても構いません。</p>
-            <p>キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
+            <p class="is-hidden-mobile">
+                キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
             <ul v-if="questions.length" class="my-3">
                 <li :id="index | questionId(index)" v-for="(question, index) in questions" :key="index">Q{{ index + 1 }}. {{ question.lemma }}
                     <ol class="list-decimal my-2">

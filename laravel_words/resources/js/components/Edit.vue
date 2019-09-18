@@ -28,7 +28,7 @@
             </div>
         </form>
         <form v-if="taskLength" @submit.prevent="onDelete">
-            <v-client-table :data="tasks" :columns="columns" :options="options" @row-click.self="toggleComplete">
+            <v-client-table :data="tasks" :columns="visibleColumns" :options="options" @row-click.self="toggleComplete">
                 <!-- checkbox for each header (prefix column name with h__-->
                 <template slot="h__no">
                     <label for="checkAll">
@@ -42,9 +42,18 @@
                         </label>
                     </div>
                 </template>
-                <template slot="defs_en" slot-scope="props">
+                <template :slot="slotHeaderName">
+                    <label for="meaning">意味 </label>
+                    <div class="select">
+                        <select v-model="language" id="meaning">
+                            <option value="eng">英語</option>
+                            <option value="jpn">日本語</option>
+                        </select>
+                    </div>
+                </template>
+                <template :slot="slotName" slot-scope="props">
                     <ul>
-                        <li v-for="def in props.row.defs_en">{{ def }}</li>
+                        <li v-for="def in props.row[slotName]">{{ def }}</li>
                     </ul>
                 </template>
                 <template slot="level" slot-scope="props">
@@ -92,16 +101,34 @@ export default {
                 return null;
             }
             return this.tasks.length;
+        },
+        slotName() {
+            if (this.language === 'eng') {
+                return 'defs_en';
+            }
+            return 'defs_jp';
+        },
+        slotHeaderName() {
+            if (this.language === 'eng') {
+                return 'h__defs_en';
+            }
+            return 'h__defs_jp';
+        },
+        visibleColumns() {
+            if (this.language === 'eng') {
+                return ['no', 'lemma', 'level', 'defs_en', 'is_complete', 'created_at'];
+            }
+            return ['no', 'lemma', 'level', 'defs_jp', 'is_complete', 'created_at'];
         }
     },
     data() {
         return {
+            language: 'eng',
             book: '',
             exportOption: 'all',
             tasks: '',
             checkAll: false,
             checkedWords: [],
-            columns: ['no', 'lemma', 'level', 'defs_en', 'is_complete', 'created_at'],
             options: {
                 sortable: ['no', 'lemma', 'level', 'is_complete', 'created_at'],
                 headings: {
@@ -132,13 +159,17 @@ export default {
             }
         },
         toggleComplete(e) {
+            if (this.isLoading) {
+                return;
+            }
+            this.isLoading = true;
             let found = this.tasks.find(task => task.id == e.row.id);
             if (!found) {
                 return;
             }
             found.is_complete = !found.is_complete;
             this.patch('/api/tasks/', {
-                words: e.row.id,
+                words: [e.row.id],
                 isComplete: e.row.is_complete
             });
         },

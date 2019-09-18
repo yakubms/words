@@ -38,10 +38,10 @@
         </form>
         <form id="#q0" method="POST" v-if="questions.length" @submit.prevent="submitAnswer" class="text-lg">
             <p>次の選択肢から最も意味の近いものを選んで下さい。分からない場合はチェックしなくても構いません。</p>
-            <p>キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
-            <ul class="my-3">
+            <p class="is-hidden-mobile">キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
+            <ul>
                 <li :id="index | questionId" v-for="(question, index) in questions" :key="index">Q{{ 10 * page + index + 1 }}. {{ question.lemma }}
-                    <ol class="list-decimal my-2">
+                    <ol class="list-decimal">
                         <li v-for="(el, key) in question.quiz"><label>{{ key + 1 }}. <input type="radio" :name="index" size="30" v-model="answers[index]" :value="answerData(index, key)" @change="setCurrent(index)">{{ el }}</label></li>
                     </ol>
                 </li>

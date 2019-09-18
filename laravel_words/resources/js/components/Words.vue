@@ -2,7 +2,7 @@
     <div>
         <h1 class="title">単語帳</h1>
         <form @submit.prevent="create">
-            <div class="field is-grouped">
+            <div class="field is-grouped is-grouped-multiline">
                 <label class="label" for="name">単語帳の名前（任意）</label>
                 <div class="control">
                     <input type="text" class="input" name="name" placeholder="単語帳の名前（任意）" v-model="name" maxlength="50">
@@ -17,7 +17,7 @@
             </div>
         </form>
         <form v-if="projectLength" @submit.prevent="onDelete">
-            <table class="table is-hoverable">
+            <table class="table is-hoverable is-responsive">
                 <thead>
                     <tr>
                         <th>No.</th>
@@ -139,17 +139,7 @@ export default {
             this.record(response.data);
             this.$ls.set('projects', this.projects, lsExpiryTime);
             this.$ls.set('level', this.level, lsExpiryTime);
-// this.activeProject = this.getActiveProject();
         },
-        // record(data) {
-        //     this.projects = data.projects;
-        //     this.$ls.set('projects', this.projects, 60 * 60 * 1000);
-        //     if (data.level) {
-        //         this.level = data.level;
-        //         this.$ls.set('level', this.level, 60 * 60 * 1000);
-        //     }
-        //     this.activeProject = this.getActiveProject();
-        // },
         getCompleteRate(project) {
             if (!project.task_count) {
                 return null;
@@ -246,7 +236,6 @@ export default {
             return;
         }
         this.fetchProjects();
-        // this.get('/api/projects');
     }
 }
 

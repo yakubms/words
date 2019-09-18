@@ -3,19 +3,27 @@
         <h1 class="title">結果</h1>
         <router-link to="/study">戻る
         </router-link>
-        <!-- <p>同じ条件で再度復習する</p>
- -->
         <ul v-if="errors.length">
             <li v-for="error in errors" class="is-danger">エラー：{{ error }}</li>
         </ul>
-        <v-client-table v-if="results.length" :data="results" :columns="columns" :options="options" @row-click.self="toggleComplete">
+        <p>列をクリックすると学習状況を切り替えられます。</p>
+        <v-client-table v-if="results.length" :data="results" :columns="visibleColumns" :options="options" @row-click.self="toggleComplete">
+            <template :slot="slotHeaderName">
+                <label for="meaning">意味 </label>
+                <div class="select">
+                    <select v-model="language" id="meaning">
+                        <option value="eng">英語</option>
+                        <option value="jpn">日本語</option>
+                    </select>
+                </div>
+            </template>
             <!-- checkbox for each row-->
             <template slot="isCorrect" slot-scope="props">
                 {{ props.row.isCorrect | isCorrect }}
             </template>
-            <template slot="meaning" slot-scope="props">
+            <template :slot="slotName" slot-scope="props">
                 <ul>
-                    <li v-for="def in props.row.meaning">{{ def }}</li>
+                    <li v-for="def in props.row[slotName]">{{ def }}</li>
                 </ul>
             </template>
             <template slot="level" slot-scope="props">
@@ -37,10 +45,30 @@
 import { mixin } from '../mixin';
 export default {
     mixins: [mixin],
+    computed: {
+        slotName() {
+            if (this.language === 'eng') {
+                return 'meaning';
+            }
+            return 'meaning_jp';
+        },
+        slotHeaderName() {
+            if (this.language === 'eng') {
+                return 'h__meaning';
+            }
+            return 'h__meaning_jp';
+        },
+        visibleColumns() {
+            if (this.language === 'eng') {
+                return ['isCorrect', 'lemma', 'level', 'meaning', 'isComplete'];
+            }
+            return ['isCorrect', 'lemma', 'level', 'meaning_jp', 'isComplete'];
+        }
+    },
     data() {
         return {
+            language: 'eng',
             results: [],
-            columns: ['isCorrect', 'lemma', 'level', 'meaning', 'meaning_jp', 'isComplete'],
             options: {
                 sortable: ['isCorrect', 'lemma', 'level', 'isComplete'],
                 filterable: false,
@@ -48,9 +76,7 @@ export default {
                     isCorrect: '正解',
                     lemma: '単語',
                     level: 'レベル',
-                    meaning: '意味',
-                    meaning_jp: '意味（日本語）',
-                    isComplete: '学習状況（クリックで切り替え）'
+                    isComplete: '学習状況'
                 },
                 rowClassCallback(row) {
                     return row.isComplete ? 'has-background-warning' : '';

@@ -5,7 +5,7 @@
                 @else
                 <a class="navbar-item" href="/">Tango</a>
                 @endauth
-                <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                <a role="button" :class="burgerClass" aria-label="menu" aria-expanded="false" @click="toggleBurger">
                     <span aria-hidden="true">
                     </span>
                     <span aria-hidden="true">
@@ -14,7 +14,7 @@
                     </span>
                 </a>
             </div>
-            <div id="navbar" class="navbar-menu">
+            <div id="navbar" :class="navbarClass" @click="toggleBurger">
                 <div class="navbar-start">
                     @if(!request()->is('register') and !request()->is('login') and !request()->is('password*'))
                     <router-link class="navbar-item" to="/about">このサイトについて

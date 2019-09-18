@@ -3,7 +3,7 @@ export const mixin = {
         return {
             errors: [],
             isLoaded: false,
-            isLoading: false
+            isLoading: false,
         }
     },
     methods: {

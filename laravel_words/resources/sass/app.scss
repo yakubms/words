@@ -1,9 +1,10 @@
 // $link: $oc-blue-5;
 
 @import './node_modules/bulma/bulma.sass';
+$background: #f7f7ef;
 
 body {
-    background-color: #f7f7ef;
+    background-color: $background;
 }
 
 a {
@@ -13,6 +14,11 @@ a {
         margin-top: 0.5em;
         margin-bottom: 0.5em;
     }
+}
+
+ul {
+    margin-top: 0.25em !important;
+    margin-bottom: 0.25em !important;
 }
 
 p {
@@ -33,4 +39,25 @@ h2 {
 
 .navbar {
     margin-bottom: 1.5em;
+}
+
+div.VueTables {
+    display: block;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: normal;
+    // white-space: pre-line;
+    // background-color: $background
+}
+
+table.is-responsive {
+    width: 100%;
+    overflow: auto;
+    white-space: nowrap;
+    background-color: $background;
+}
+
+td {
+    max-width: 300px;
+    word-wrap: break-word !important;
 }
