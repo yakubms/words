@@ -17,7 +17,11 @@ Route::get('/', function () {
 
 Auth::routes();
 
-// Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/.well-known/acme-challenge/{filename}', function ($filename) {
+    return file_get_contents(
+        public_path('.well-known/acme-challenge/' . $filename)
+    );
+});
 
 Route::get('/{any}', function () {
     return view('app');
