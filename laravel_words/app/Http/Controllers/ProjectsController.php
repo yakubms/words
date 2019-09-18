@@ -14,22 +14,11 @@ class ProjectsController extends Controller
      */
     public function index()
     {
-        // require validation
         $user = auth()->user();
 
         return [ 'projects' => $user->projects,
                 'level' => $user->userWordLevel()
         ];
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -40,16 +29,20 @@ class ProjectsController extends Controller
      */
     public function store(Request $request, Project $project)
     {
-        // require validation
         $user = auth()->user();
+        $attribute = $request->validate([
+            'name' => 'max:255',
+            'size' => 'integer|min:50|max:500'
+        ]);
 
         $bookNumber = $user->projects->count() + 1;
-        $name = $request->name ?? 'Book' . $bookNumber;
+
+        $name = $attribute['name'] ?? 'Book' . $bookNumber;
 
         $project->create([
             'owner_id' => $user->id,
             'name' => $name,
-            'size' => $request->size
+            'size' => $attribute['size']
         ]);
 
         return ['projects' => $user->refresh()->projects];
@@ -63,7 +56,6 @@ class ProjectsController extends Controller
      */
     public function show($id, Project $project)
     {
-        // require validation
         $user = auth()->user();
         if (! $user->hasProject($id)) {
             abort(403);
@@ -75,6 +67,11 @@ class ProjectsController extends Controller
         return ['tasks' => $collection];
     }
 
+    /**
+     * get user's project name by project id.
+     * @param  int $id [description]
+     * @return array  [description]
+     */
     public function getName($id)
     {
         $user = auth()->user();
@@ -85,6 +82,11 @@ class ProjectsController extends Controller
         return ['book' => $user->projects->find($id)->name];
     }
 
+    /**
+     * get task's information by project id
+     * @param  int $id project id
+     * @return collection [description]
+     */
     public function getTasksRaws($id)
     {
         return \DB::table('tasks')
@@ -97,6 +99,11 @@ class ProjectsController extends Controller
             ->groupBy('id');
     }
 
+    /**
+     * convert to collection
+     * @param  [type] $data [description]
+     * @return [type]       [description]
+     */
     public function convertToCollection($data)
     {
         $collection = [];
@@ -109,6 +116,11 @@ class ProjectsController extends Controller
         return $collection;
     }
 
+    /**
+     * [extractDefinitions description]
+     * @param  [type] $words [description]
+     * @return [type]        [description]
+     */
     public function extractDefinitions($words)
     {
         $enDefinitions = [];
@@ -123,23 +135,20 @@ class ProjectsController extends Controller
         return [$enDefinitions, $jpDefinitions];
     }
 
+    /**
+     * [mergeDefinitions description]
+     * @param  [type] $word          [description]
+     * @param  [type] $enDefinitions [description]
+     * @param  [type] $jpDefinitions [description]
+     * @param  [type] $number        [description]
+     * @return [type]                [description]
+     */
     public function mergeDefinitions($word, $enDefinitions, $jpDefinitions, $number)
     {
         return collect($word)->except('def', 'lang')
                 ->merge(['defs_en' => $enDefinitions,
                         'defs_jp' => $jpDefinitions,
                         'no' => $number]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Project  $project
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Project $project)
-    {
-        //
     }
 
     /**
@@ -151,10 +160,12 @@ class ProjectsController extends Controller
      */
     public function update(Request $request)
     {
-        // need validation
         $user = auth()->user();
+        $attribute = $request->validate([
+            'active' => 'required|integer',
+        ]);
 
-        return (string) $user->setActiveProject($request->active);
+        return (string) $user->setActiveProject($attribute['active']);
     }
 
     /**
@@ -165,12 +176,12 @@ class ProjectsController extends Controller
      */
     public function destroy(Request $request, Project $project)
     {
-        // need validation
         $user = auth()->user();
-        // return $request;
-
-        $project->whereOwnerId($user->id)->whereIn('id', collect($request))->delete();
-        // $user->projects->destroy(collect($request));
+        $attributes = $request->validate([
+            'projects' => 'required|array',
+            'projects.*' => 'required|integer'
+        ]);
+        $project->whereOwnerId($user->id)->whereIn('id', $attributes['projects'])->delete();
         return ['projects' => $user->projects];
     }
 }

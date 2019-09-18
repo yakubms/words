@@ -1,6 +1,14 @@
 export const mixin = {
+    data() {
+        return {
+            errors: [],
+            isLoaded: false,
+            isLoading: false
+        }
+    },
     methods: {
         submitRequest(request, endpoint, data) {
+            this.isLoading = true;
             return new Promise((resolve, reject) => {
                 axios[request](endpoint, data)
                     .then(response => {
@@ -9,6 +17,8 @@ export const mixin = {
                     })
                     .catch(error => {
                         console.log('failed.');
+                        // this.record(error.response);
+                        this.errors = error.response.request.status;
                     })
                     .finally(() => {
                         this.isLoading = false;
@@ -32,23 +42,20 @@ export const mixin = {
             this.submitRequest('delete', endpoint, { data: data });
         },
         record(data) {
-            console.log(data);
-            if (data.error) {
-                this.errors.record(data.error);
-                return false;
+            let fields = Object.keys(data);
+            for (let field of fields) {
+                this[field] = data[field];
             }
-            let field = Object.keys(data);
-            // console.log(field);
-            this[field] = data[field];
-            // console.log('recorded');
         },
         async refreshProjects() {
             if (this.$ls.get('projects')) {
-                return;
+                this.level = this.$ls.get('level');
+                this.projects = this.$ls.get('projects');
             }
             let response = await axios.get('/api/projects');
             this.$ls.set('level', response.data.level, lsExpiryTime);
             this.$ls.set('projects', response.data.projects, lsExpiryTime);
-        }
+            this.record(response.data);
+        },
     }
 }

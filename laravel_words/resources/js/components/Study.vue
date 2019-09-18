@@ -30,8 +30,8 @@
                 <div class="control">
                     <div class="select">
                         <select v-model="studyOptions.lang">
-                            <option value="eng">英英</option>
-                            <option value="jpn">英和</option>
+                            <option value="eng">英語</option>
+                            <option value="jpn">日本語</option>
                         </select>
                     </div>
                 </div>
@@ -58,7 +58,7 @@
         <form method="POST" v-if="loaded && !errors.length" @submit.prevent="submitAnswer" class="text-lg">
             <p>次の選択肢から最も意味の近いものを選んで下さい。分からない場合はチェックしなくても構いません。</p>
             <p>キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
-            <ul class="my-3">
+            <ul v-if="questions.length" class="my-3">
                 <li :id="index | questionId(index)" v-for="(question, index) in questions" :key="index">Q{{ index + 1 }}. {{ question.lemma }}
                     <ol class="list-decimal my-2">
                         <li v-for="(el, key) in question.quiz"><label>{{ key + 1 }}. <input type="radio" :name="index" size="30" v-model="answers[index]" :value="answerData(index, key)" @change="setCurrent(index)">{{ el }}</label></li>
@@ -107,11 +107,14 @@ export default {
         },
         submitAnswer() {
             console.log('submitting answer start');
+            if (this.isLoading || !this.isLoaded) {
+                return null;
+            }
+            this.isLoading = true;
+            this.isLoaded = false;
+
             let filledAnswers = this.fillBlankAnswers();
             this.fetchResults(filledAnswers);
-            //     this.post('/api/words/quiz', {
-            //         answers: filledAnswers
-            //     });
         },
         async fetchResults(answers) {
             let response = await axios.post('/api/words/quiz', {

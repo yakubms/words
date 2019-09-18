@@ -13,10 +13,10 @@ class WordTest extends TestCase
     public function it_returns_a_word_level()
     {
         $word = new Word();
-        $level = $word->getLevel('gratify');
+        $level = $word->level('gratify');
         $this->assertEquals(271, $level);
 
-        $level = $word->getLevel('hogehoge');
+        $level = $word->level('hogehoge');
         $this->assertFalse($level);
     }
 
@@ -24,16 +24,13 @@ class WordTest extends TestCase
     public function it_returns_word_definitions()
     {
         $word = new Word();
-        $definitions = $word->getEnDefinitions('gratify');
+        $definitions = $word->lemma('gratify')->enDefinitions();
         $this->assertCount(3, $definitions);
 
-        $definitions = $word->getJpDefinitions('gratify');
+        $definitions = $word->lemma('gratify')->jpDefinitions();
         $this->assertCount(3, $definitions);
 
-        $definitions = $word->getEnExamples('gratify');
+        $definitions = $word->lemma('gratify')->enExamples();
         $this->assertCount(2, $definitions);
-
-        $definitions = $word->getEnDefinitions('hogehoge');
-        $this->assertFalse($definitions);
     }
 }

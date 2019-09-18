@@ -25,9 +25,8 @@ class TaskTest extends TestCase
         $response = $this->actingAs($user)->withHeaders([
             'Authorization' => 'Bearer ' . $user->api_token])
             ->json('POST', '/api/tasks/create', [
-                'file' => new UploadedFile(__DIR__ . '/hoge.txt', 'hoge.txt', null, null, null, true)]);
-
+                'file' => new UploadedFile(__DIR__ . '/testDictionary.txt', 'testDictionary.txt', null, null, null, true)]);
         $response->assertStatus(200);
-        $response->assertJsonCount(4);
+        $response->assertJson(['count' => 4]);
     }
 }

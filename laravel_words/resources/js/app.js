@@ -20,9 +20,30 @@ Vue.use(VueRouter);
 import { ClientTable, Event } from 'vue-tables-2';
 Vue.use(ClientTable, {}, false, 'bulma', 'default');
 
+const router = new VueRouter(routes);
+
+router.beforeEach((to, from, next) => {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        if (!Laravel.apiToken) {
+            window.location.replace('/login');
+        }
+    }
+    next();
+})
+
 const app = new Vue({
     el: '#app',
-    router: new VueRouter(routes),
+    router: router,
+    methods: {
+        clearStorage() {
+            this.$ls.clear('level');
+            this.$ls.clear('projects');
+        },
+        onLogout() {
+            this.clearStorage();
+            document.getElementById('logout-form').submit();
+        }
+    },
     mounted() {
         // remove expired local storage
         for (const key of Object.keys(localStorage)) {

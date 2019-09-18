@@ -12,10 +12,7 @@ use Illuminate\Http\Request;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::middleware('auth:api')->get('users', 'UsersController@show');
 
 Route::get('words', 'WordsQuizController@generate');
 Route::middleware('auth:api')->get('words/quiz', 'WordsQuizController@quiz');
@@ -30,6 +27,7 @@ Route::middleware('auth:api')->patch('projects', 'ProjectsController@update');
 Route::middleware('auth:api')->delete('projects', 'ProjectsController@destroy');
 // Route::middleware('auth:api')->get('words', 'WordsQuizController@generate');
 Route::middleware('auth:api')->post('tasks/create', 'TasksController@create');
+Route::middleware('auth:api')->delete('tasks/create', 'TasksController@revert');
 // Route::post('tasks/create', 'TasksController@create');
 Route::middleware('auth:api')->post('tasks', 'TasksController@store');
 Route::middleware('auth:api')->get('tasks/{lemma}', 'TasksController@show');

@@ -39,9 +39,18 @@ class Word extends Model
         return $this->whereLemma($lemma)->first();
     }
 
+    public function exists($lemma)
+    {
+        return $this->whereLemma($lemma)->exists();
+    }
+
     public function id($lemma)
     {
-        return $this->lemma($lemma)->wordid;
+        $word = $this->lemma($lemma);
+        if (!$word) {
+            return null;
+        }
+        return $word->wordid;
     }
 
     public function enDefinitions()

@@ -1,10 +1,13 @@
 <template>
     <div>
-        <h1 class="title">単語帳を編集する</h1>
-        <router-link to="/words">戻る
+        <h1 v-if="!isLoading" class="title">単語帳を編集する</h1>
+        <router-link v-if="!isLoading" to="/words">戻る
         </router-link>
+        <p v-if="isLoading">読み込み中……</p>
+        <div v-if="errors.length" class="notification is-danger">{{ errors }}</div>
         <form v-if="taskLength" @submit.prevent="onExport">
             <div class="field">
+                <p>単語帳のエクスポート</p>
                 <div class="control">
                     <select v-model="exportOption">
                         <option value="all">全て</option>
@@ -29,7 +32,7 @@
                 <!-- checkbox for each header (prefix column name with h__-->
                 <template slot="h__no">
                     <label for="checkAll">
-                        <input type='checkbox' id='checkAll' @click='toggleCheckAll'>全て選択</label>
+                        <input type='checkbox' id='checkAll' @click='toggleCheckAll' :checked="checkAll">全て選択</label>
                 </template>
                 <!-- checkbox for each row-->
                 <template slot="no" slot-scope="props">
@@ -157,57 +160,61 @@ export default {
             }
             this.checkedWords.push(id);
         },
-        onDelete() {
-            swal("選択した" + this.checkedWords.length + "個の単語を削除しますか？", {
-                    buttons: {
-                        ondelete: {
-                            text: "削除する",
-                            value: "ondelete"
-                        },
-                        not: "削除しない",
-                    }
-                })
-                .then(value => {
-                    if (value == 'ondelete') {
-                        this.delete('/api/tasks', this.checkedWords);
-                        swal("削除しました。");
-                        this.get('/api/words/edit/' + this.id);
-                        this.checkedWords = [];
+        async onDelete() {
+            let value = await swal("選択した" + this.checkedWords.length + "個の単語を削除しますか？", {
+                buttons: {
+                    ondelete: {
+                        text: "削除する",
+                        value: "ondelete"
+                    },
+                    not: "削除しない",
+                }
+            });
+
+            if (value == 'ondelete') {
+                let response = await axios.delete('/api/tasks', {
+                    data: {
+                        tasks: this.checkedWords
                     }
                 });
+                swal("削除しました。");
+                this.get('/api/words/edit/' + this.id);
+                this.refreshProjects();
+                this.checkedWords = [];
+            }
         },
-        onComplete() {
-            swal("選択した" + this.checkedWords.length + "個の単語の学習状況を変更しますか？", {
-                    buttons: {
-                        oncomplete: {
-                            text: "学習済みにする",
-                            value: "oncomplete"
-                        },
-                        ongoing: {
-                            text: "学習中にする",
-                            value: "ongoing"
-                        },
-                        not: "変更しない",
-                    }
-                })
-                .then(value => {
-                    if (value == 'oncomplete') {
-                        this.patch('/api/tasks', {
-                            words: this.checkedWords,
-                            isComplete: true
-                        });
-                        swal("学習済みにしました。");
-                    }
-                    if (value == 'ongoing') {
-                        this.patch('/api/tasks', {
-                            words: this.checkedWords,
-                            isComplete: false
-                        });
-                        swal("学習中にしました。");
-                    }
-                    this.get('/api/words/edit/' + this.id);
-                    this.checkedWords = [];
+        async onComplete() {
+            let value = await swal("選択した" + this.checkedWords.length + "個の単語の学習状況を変更しますか？", {
+                buttons: {
+                    oncomplete: {
+                        text: "学習済みにする",
+                        value: "oncomplete"
+                    },
+                    ongoing: {
+                        text: "学習中にする",
+                        value: "ongoing"
+                    },
+                    not: "変更しない",
+                }
+            });
+
+            if (value == 'oncomplete') {
+                let response = await axios.patch('/api/tasks', {
+                    words: this.checkedWords,
+                    isComplete: true
                 });
+                swal("学習済みにしました。");
+            }
+            if (value == 'ongoing') {
+                let respones = await axios.patch('/api/tasks', {
+                    words: this.checkedWords,
+                    isComplete: false
+                });
+                swal("学習中にしました。");
+            }
+            this.get('/api/words/edit/' + this.id);
+            this.checkAll = false;
+            this.checkedWords = [];
         },
         onExport() {
             let text = '';

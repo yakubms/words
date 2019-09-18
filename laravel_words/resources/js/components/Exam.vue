@@ -1,32 +1,42 @@
 <template>
     <div>
-        <h1 v-if="!isComplete" class="text-xl mb-4">テストを受ける</h1>
-        <p v-if="!isLoading && !isLoaded && !isComplete">あなたの英単語力を測定します。所要時間は5～10分ほどです。</p>
+        <h1 v-if="!isComplete" class="title is-3">テストを受ける</h1>
+        <p v-if="!isLoading && !isLoaded && !isComplete">あなたの英単語力を測定します。全50問、所要時間は5～10分ほどです。</p>
         <p v-if="isLoading">読み込み中……。</p>
-        <form v-if="!isLoading && !isLoaded && !isComplete" class="w-full max-w-sm text-lg" @submit.prevent="startTest">
-            <div class="flex items-center border-b border-b-2 border-teal-500 py-2">
-                <label class="block mt-4">
-                    <span class="text-gray-700">あなたの英語力</span>
-                    <select class="form-select mt-1 block w-full" v-model="level">
-                        <option value="30">中学レベル</option>
-                        <option value="50">高校レベル</option>
-                        <option value="70">大学レベル</option>
-                        <option value="120">英検一級</option>
-                        <option value="200">英単語マニア</option>
-                        <option value="300">ネイティブ</option>
-                    </select>
-                </label>
-                <label class="block mt-4">
-                    <span class="text-gray-700">選択肢の言語</span>
-                    <select class="form-select mt-1 block w-full" v-model="language">
-                        <option value="eng">英語</option>
-                        <option value="jpn">日本語</option>
-                    </select>
-                </label>
-                <button class="flex-shrink-0 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">スタート</button>
+        <form v-if="!isLoading && !isLoaded && !isComplete" @submit.prevent="startTest">
+            <div class="field">
+                <label>あなたの英語力</label>
+                <div class="control">
+                    <div class="select">
+                        <select v-model="level">
+                            <option value="30">中学レベル</option>
+                            <option value="50">高校レベル</option>
+                            <option value="70">大学レベル</option>
+                            <option value="120">英検一級</option>
+                            <option value="200">英単語マニア</option>
+                            <option value="300">ネイティブ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="field">
+                <label>選択肢の言語</label>
+                <div class="control">
+                    <div class="select">
+                        <select v-model="language">
+                            <option value="eng">英語</option>
+                            <option value="jpn">日本語</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" type="submit">スタート</button>
+                </div>
             </div>
         </form>
-        <form method="POST" v-if="questions.length" @submit.prevent="submitAnswer" class="text-lg">
+        <form id="#q0" method="POST" v-if="questions.length" @submit.prevent="submitAnswer" class="text-lg">
             <p>次の選択肢から最も意味の近いものを選んで下さい。分からない場合はチェックしなくても構いません。</p>
             <p>キーボード操作：数字…選択肢を選択(0でスキップ)、Del…一つ戻る、Enter…送信</p>
             <ul class="my-3">
@@ -106,6 +116,13 @@ export default {
         },
         async submitAnswer() {
             // console.log('submitting answer...');
+            if (this.isLoading || !this.isLoaded) {
+                return null;
+            }
+
+            this.isLoading = true;
+            this.isLoaded = false;
+
             let filledAnswers = this.fillBlankAnswers();
             let response = await axios.post('/api/words', {
                 level: this.level,
@@ -115,8 +132,11 @@ export default {
             this.level = response.data.level;
             this.page++;
             this.reset();
-            this.$router.push('/exam');
+            if (this.$route.hash) {
+                this.$router.push('/exam');
+            }
             if (this.page == 5) {
+                this.isLoading = false;
                 this.isComplete = true;
                 return;
             }

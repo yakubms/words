@@ -2,6 +2,35 @@
 
 @import './node_modules/bulma/bulma.sass';
 
+body {
+    background-color: #f7f7ef;
+}
+
 a {
     text-decoration: none;
+
+    &.button {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+}
+
+p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+button {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+h2 {
+    display: inline-block;
+    background: linear-gradient(transparent 70%, #a7d6ff 70%);
+    margin-top: 0.5em;
+}
+
+.navbar {
+    margin-bottom: 1.5em;
 }

@@ -33,9 +33,10 @@ export const quizmixin = {
             }
         },
         keyMonitor(e) {
-            if (!this.isLoaded) {
+            if (!this.isLoaded || this.isLoading) {
                 return null;
             }
+            console.log(e.key);
             if (e.key == 'Delete') {
                 return this.revert();
             }
@@ -134,7 +135,12 @@ export const quizmixin = {
     },
     mounted() {
         window.addEventListener('keyup', e =>
-            this.keyMonitor(e)
-        );
+            this.keyMonitor(e), false);
+        console.log('keymonitor listener mounted');
+    },
+    destroyed() {
+        window.removeEventListener('keyup', e =>
+            this.keyMonitor(e), false);
+        console.log('keymonitor listener destroyed.');
     }
 }

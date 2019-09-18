@@ -34,10 +34,9 @@
 
 </style>
 <script>
-import { quizmixin } from '../quizmixin';
 import { mixin } from '../mixin';
 export default {
-    mixins: [mixin, quizmixin],
+    mixins: [mixin],
     data() {
         return {
             results: [],
@@ -81,14 +80,18 @@ export default {
         },
         toggleComplete(e) {
             let found = this.results.find(task => task.id == e.row.id);
+            let index = this.results.findIndex(task => task.id == e.row.id);
             if (!found) {
                 return;
             }
             found.isComplete = !found.isComplete;
             this.patch('/api/tasks/', {
-                words: found.id,
-                isComplete: e.row.isComplete
+                words: [found.id],
+                isComplete: found.isComplete
             });
+            console.log(index);
+            this.results[index] = found;
+            this.$ls.set('results', this.results, lsExpiryTime);
         },
     },
     mounted() {

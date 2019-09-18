@@ -140,8 +140,12 @@ class User extends Authenticatable
 
     public function nextActiveProjectId($id)
     {
+        if ($id == $this->projects->last()->id) {
+            return null;
+        }
+
         if ($this->projects->find($id)->is_active == true) {
-            return $this->projects
+            $project = $this->projects
                 ->where('id', '>', $id)
                 ->filter(function ($project) {
                     return $project->room() > 0;

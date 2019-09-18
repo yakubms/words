@@ -1,7 +1,8 @@
 <template>
     <div>
-        <p>ホーム</p>
-        <p v-if="level">あなたの現在の英単語力：{{ level * 100 }}語</p>
+        <p v-if="!name">現在試験運用中です。id: guest, pass: guestでゲストとしてログインできます。</p>
+        <p v-if="name">ようこそ！ {{ name }}さん</p>
+        <p v-if="name">あなたの現在の英単語力は{{ level * 100 }}語です。</p>
     </div>
 </template>
 <script>
@@ -10,12 +11,24 @@ export default {
     mixins: [mixin],
     data() {
         return {
-            level: ''
+            projects: [],
+            level: 0,
+            name: '',
         }
     },
     mounted() {
-        this.refreshProjects();
-        this.level = this.$ls.get('level');
+        if (Laravel.apiToken) {
+            this.refreshProjects();
+        }
+        if (Laravel.apiToken && !this.$ls.get('name')) {
+            axios.get('/api/users')
+                .then(response => {
+                    this.name = response.data.name;
+                    this.$ls.set('name', this.name, lsExpiryTime);
+                });
+            return;
+        }
+        this.name = this.$ls.get('name');
     }
 }
 

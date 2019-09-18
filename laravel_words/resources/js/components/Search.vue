@@ -2,7 +2,7 @@
     <div>
         <h1 class="title">単語検索</h1>
         <form @submit.prevent="search">
-            <div class="field is-grouped">
+            <div class="field">
                 <label class="label" for="name">単語を入力</label>
                 <div class="control">
                     <input type="text" class="input" name="name" placeholder="input a word" v-model="searchWord" @input="clearErrors" required>
@@ -14,14 +14,16 @@
             <span v-if="errors.length" v-for="error in errors" class="notification is-danger column is-3">{{ error }}
             </span>
         </form>
-        <div class="container has-margin-5" v-if="exampleLength">
-            <p class="column is-3">{{ lemma }} レベル: {{ level }}</p>
-            <ol class="menu-list column is-3">
-                <li v-for="example in examples">{{ example }}</li>
-            </ol>
-            <ol class="menu-list column is-3">
-                <li v-for="meaningJp in meaningsJp">{{ meaningJp }}</li>
-            </ol>
+        <div class="container" v-if="exampleLength">
+            <p>{{ lemma }} レベル: {{ level }}</p>
+            <div class="columns">
+                <ol class="menu-list column is-5">
+                    <li v-for="example in examples">{{ example }}</li>
+                </ol>
+                <ol class="menu-list column is-5">
+                    <li v-for="meaningJp in meaningsJp">{{ meaningJp }}</li>
+                </ol>
+            </div>
             <form @submit.prevent="onStore">
                 <div class="field">
                     <div class="control">

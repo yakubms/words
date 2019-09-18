@@ -30,30 +30,37 @@ export default {
         },
         {
             path: '/search',
-            component: Search
+            component: Search,
+            meta: { requiresAuth: true }
         },
         {
             path: '/study',
-            component: Study
+            component: Study,
+            meta: { requiresAuth: true }
+
         },
         {
             path: '/study/result',
-            component: StudyResult
+            component: StudyResult,
+            meta: { requiresAuth: true }
+
         },
         {
             path: '/words',
             name: 'words',
-            component: Words
+            component: Words,
+            meta: { requiresAuth: true }
         },
         {
             path: '/edit/:id+',
             name: 'edit',
             component: Edit,
-            props: true
+            props: true,
+            meta: { requiresAuth: true }
         },
         {
             path: '*',
             component: NotFound,
         },
-    ]
+    ],
 }

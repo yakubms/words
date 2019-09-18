@@ -1,8 +1,6 @@
 <template>
     <div>
         <h1 class="title">単語帳</h1>
-        <p v-if="level">現在の英単語力：{{ level * 100 }}語</p>
-        <p>クリックでアクティブな単語帳を切り替えられます。</p>
         <form @submit.prevent="create">
             <div class="field is-grouped">
                 <label class="label" for="name">単語帳の名前（任意）</label>
@@ -37,7 +35,7 @@
                             </label></td>
                         <td>{{ project.name }}</td>
                         <td>{{ project.task_count }}/{{ project.size }}</td>
-                        <td>{{ getCompleteRate(project) }}</td>
+                        <td>{{ getProgress(project) }}</td>
                         <td>{{ project.created_at }}</td>
                         <td>
                             <router-link :to="getEditLink(project.id)" tag="button" class="button is-primary">編集</router-link>
@@ -62,7 +60,7 @@
             </div>
             <div @click="toggleAsComplete">
                 <label class="checkbox" for="asComplete">
-                    <input type="checkbox" name="asComplete" v-model="asComplete">完了済みの単語として追加する
+                    <input type="checkbox" name="asComplete" v-model="asComplete">学習済みの単語として追加する
                 </label>
             </div>
             <file-pond name="file" ref="pond" :server="{
@@ -74,7 +72,7 @@
                 },
                 onload: response => getInsertCount(response)
             }
-        }" :allow-multiple="false" instantUpload="true" allowRevert="false" maxFileSize="1MB" accepted-file-types="text/plain, text/csv, text/html" label-idle="ファイルを選択、またはドロップ（サイズは最大1MBまで）" @addfile="setMetaData" @processfile="onAddFile" @error="onError" />
+        }" allow-multiple="false" instantUpload="true" allowRevert="false" allowReplace="true" maxFileSize="1MB" accepted-file-types="text/plain, text/csv, text/html" label-idle="ファイルを選択、またはドロップ（サイズは最大1MBまで）" @addfile="setMetaData" @processfile="onAddFile" @error="onError" />
         </form>
     </div>
 </template>
@@ -136,26 +134,35 @@ export default {
             })
             swal("新しい単語帳を作成しました。");
         },
-        record(data) {
-            // console.log(data);
-            if (data.error) {
-                this.errors.record(data.error);
-                return false;
-            }
-            // console.log(data);
-            this.projects = data.projects;
-            this.$ls.set('projects', this.projects, 60 * 60 * 1000);
-            if (data.level) {
-                this.level = data.level;
-                this.$ls.set('level', this.level, 60 * 60 * 1000);
-            }
-            this.activeProject = this.getActiveProject();
+        async fetchProjects() {
+            let response = await axios.get('/api/projects');
+            this.record(response.data);
+            this.$ls.set('projects', this.projects, lsExpiryTime);
+            this.$ls.set('level', this.level, lsExpiryTime);
+// this.activeProject = this.getActiveProject();
         },
+        // record(data) {
+        //     this.projects = data.projects;
+        //     this.$ls.set('projects', this.projects, 60 * 60 * 1000);
+        //     if (data.level) {
+        //         this.level = data.level;
+        //         this.$ls.set('level', this.level, 60 * 60 * 1000);
+        //     }
+        //     this.activeProject = this.getActiveProject();
+        // },
         getCompleteRate(project) {
             if (!project.task_count) {
                 return null;
             }
             return parseInt(100 * project.task_complete_count / project.task_count) + '%';
+        },
+        getProgress(project) {
+            if (!project.task_count) {
+                return;
+            }
+            return project.task_complete_count + '/' +
+                project.task_count + '(' +
+                this.getCompleteRate(project) + ')';
         },
         isActive(project) {
             if (project.is_active) {
@@ -204,7 +211,7 @@ export default {
                 })
                 .then(value => {
                     if (value == 'ondelete') {
-                        this.delete('/api/projects', this.deleteProjects);
+                        this.delete('/api/projects', { projects: this.deleteProjects });
                         swal("削除しました。");
                         this.deleteProjects = [];
                     }
@@ -223,7 +230,7 @@ export default {
         },
         onAddFile() {
             swal(this.count + '個の単語を単語帳に追加しました。');
-            this.get('/api/projects');
+            this.fetchProjects();
         },
         onError() {
             swal('アップロード失敗！');
@@ -238,7 +245,8 @@ export default {
             this.level = this.$ls.get('level');
             return;
         }
-        this.get('/api/projects');
+        this.fetchProjects();
+        // this.get('/api/projects');
     }
 }
 
