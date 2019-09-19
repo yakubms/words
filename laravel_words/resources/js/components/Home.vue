@@ -2,13 +2,21 @@
     <div>
         <p v-if="!name">現在試験運用中です。id: guest, pass: guestでゲストとしてログインできます。</p>
         <p v-if="name">ようこそ！ {{ name }}さん</p>
-        <p v-if="name">あなたの現在の英単語力は{{ level * 100 }}語です。</p>
+        <p v-if="name && currentVocabulary">あなたの現在の英単語力は{{ currentVocabulary }}語です。</p>
     </div>
 </template>
 <script>
 import { mixin } from '../mixin';
 export default {
     mixins: [mixin],
+    conputed: {
+        currentVocabulary() {
+            if (this.$ls.get('level')) {
+                return this.$ls.get('level');
+            }
+            return this.level * 100;
+        }
+    },
     data() {
         return {
             projects: [],
