@@ -73,5 +73,10 @@ const app = new Vue({
                 Vue.ls.remove(vueStorageName);
             }
         }
-    }
+    },
+    beforeDestroy() {
+        console.log('component destroyed');
+        Vue.ls.remove('name');
+        Vue.ls.remove('level');
+    },
 });
