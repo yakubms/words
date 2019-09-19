@@ -119,6 +119,7 @@ export default {
         },
         async fetchResults(answers) {
             let response = await axios.post('/api/words/quiz', {
+                language: this.studyOptions.lang,
                 answers: answers
             });
             console.log(response.data.results);

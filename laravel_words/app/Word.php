@@ -100,9 +100,15 @@ class Word extends Model
         return $word->get('wordid');
     }
 
-    public function randomWords($number, $minLevel, $maxLevel)
+    // public function randomWords($number, $minLevel, $maxLevel)
+    // {
+    //     return $this->whereBetween('level', [$minLevel, $maxLevel])->inRandomOrder()->take($number)->get();
+    // }
+
+    public function randomWords($questions, $dummies, $minLevel, $maxLevel)
     {
-        return $this->whereBetween('level', [$minLevel, $maxLevel])->inRandomOrder()->take($number)->get();
+        $number = $questions * ($dummies + 1);
+        return $this->with(['synsets'])->whereBetween('level', [$minLevel, $maxLevel])->inRandomOrder()->take($number)->get();
     }
 
     public function level($lemma)
@@ -152,8 +158,11 @@ class Word extends Model
         return $this->getDefinitions($lemma, 'jpn');
     }
 
-    public function isCorrect($lemma, $answer)
+    public function isCorrect($lemma, $language, $answer)
     {
-        return trim($this->getEnDefinitions($lemma)->first()) == $answer;
+        if ($language === 'eng') {
+            return trim($this->getEnDefinitions($lemma)->first()) == $answer;
+        }
+        return trim($this->getJpDefinitions($lemma)->first()) == $answer;
     }
 }

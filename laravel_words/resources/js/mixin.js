@@ -48,10 +48,6 @@ export const mixin = {
             }
         },
         async refreshProjects() {
-            if (this.$ls.get('projects')) {
-                this.level = this.$ls.get('level');
-                this.projects = this.$ls.get('projects');
-            }
             let response = await axios.get('/api/projects');
             this.$ls.set('level', response.data.level, lsExpiryTime);
             this.$ls.set('projects', response.data.projects, lsExpiryTime);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Word;
+use App\Task;
 use Illuminate\Http\Request;
 
 class WordsQuizController extends Controller
@@ -40,27 +41,55 @@ class WordsQuizController extends Controller
     public function generate(Request $request, Word $word)
     {
         $attributes = $request->validate([
-            'level' => 'required|integer|min:1|max:999',
+            'level' => 'required|integer|min:0|max:999',
             'language' => 'required|max:3'
         ]);
         $level = $attributes['level'];
         $language = $attributes['language'];
 
-        $minLevel = ($level - 10 > 0) ? $level - 10 : 1;
-        $maxLevel = ($level + 10 < self::LEVEL_MAX) ? $level + 10 : self::LEVEL_MAX;
-        $words = $word->randomWords(10, $minLevel, $maxLevel);
+        $minLevel = $this->getMinLevel($level);
+        $maxLevel = $this->getMaxLevel($level);
+        $dummiesCount = $this->getDummiesCount($level);
+        $words = $word->randomWords(50, $dummiesCount, $minLevel, $maxLevel);
+        $questions = $words->splice(0, 10);
 
-        $quiz = $words->map(function ($word) use ($language, $level) {
-            $definition = $this->getDefinition($word, $language);
-            $dummies = $this->generateDummies($word, 5, $language, $level);
+        $quiz = $questions->map(function ($question) use ($words, $language, $dummiesCount) {
+            $definition = $question->synsets->where('lang', $language)->first()->def;
+            $dummies = $words->splice(0, $dummiesCount)
+                ->map(function ($word) use ($language) {
+                    return $word->synsets->where('lang', $language)->first()->def;
+                });
             return [
                 'id' => 0,
-                'lemma' => $word->lemma,
-                'level' => $word->level,
+                'lemma' => $question->lemma,
+                'level' => $question->level,
                 'quiz' => $dummies->push($definition)->shuffle()];
         });
 
         return ['questions' => $quiz];
+    }
+
+    public function getMinLevel($level)
+    {
+        return ($level - 10 > 0) ? $level - 10 : 1;
+    }
+
+    public function getMaxLevel($level)
+    {
+        return ($level + 10 < self::LEVEL_MAX) ? $level + 10 : self::LEVEL_MAX;
+    }
+
+    public function getDummiesCount($level)
+    {
+        if ($level >= 400) {
+            return 8;
+        }
+
+        if ($level >= 200) {
+            return (int) ($level / 100) + 4;
+        }
+
+        return (int) ($level / 50) + 2;
     }
 
     /**
@@ -72,7 +101,8 @@ class WordsQuizController extends Controller
     public function score(Request $request, Word $word)
     {
         $attributes = $request->validate([
-            'level' => 'required|integer|min:1|max:999',
+            'level' => 'required|integer|min:0|max:999',
+            'language' => 'required|string|max:3',
             'answers' => 'required|array',
             'answers.*.lemma' => 'required|string|max:100',
             'answers.*.answer' => 'max:999'
@@ -80,8 +110,9 @@ class WordsQuizController extends Controller
 
         $level = $attributes['level'];
         $answers = $attributes['answers'];
+        $language = $attributes['language'];
 
-        $score = $this->estimate($level, $answers, $word);
+        $score = $this->estimate($level, $answers, $language, $word);
 
         return ['level' => $score];
     }
@@ -93,11 +124,11 @@ class WordsQuizController extends Controller
      * @param  Word   $word    [description]
      * @return [type]          [description]
      */
-    public function estimate($level, $answers, Word $word)
+    public function estimate($level, $answers, $language, $word)
     {
         $score = $level;
         foreach ($answers as $answer) {
-            $score += $this->calculateScore($answer, $level, $word);
+            $score += $this->calculateScore($answer, $language, $level, $word);
         }
         if ($score > 0) {
             return (int) $score;
@@ -112,13 +143,13 @@ class WordsQuizController extends Controller
      * @param  [type] $word   [description]
      * @return [type]         [description]
      */
-    public function calculateScore($answer, $level, $word)
+    public function calculateScore($answer, $language, $level, $word)
     {
         if (is_null($answer)) {
             return -3;
         }
         $diff = $word->level($answer['lemma']) - $level;
-        if ($this->isCorrect($word, $answer)) {
+        if ($this->isCorrect($word, $language, $answer)) {
             return $this->onCorrect($diff);
         }
         return $this->onIncorrect($diff);
@@ -129,15 +160,15 @@ class WordsQuizController extends Controller
         if ($diff < 0) {
             return 3;
         }
-        return (int) ($diff / 3);
+        return (int) ($diff * 0.3);
     }
 
     public function onIncorrect($diff)
     {
         if ($diff < 0) {
-            return - (int) (abs($diff) * 0.8);
+            return - (int) (abs($diff) * 0.5);
         }
-        return - (int) ($diff / 3);
+        return -3;
     }
 
     /**
@@ -146,7 +177,7 @@ class WordsQuizController extends Controller
      * @param  Word    $word    [description]
      * @return [type]           [description]
      */
-    public function quiz(Request $request, Word $word)
+    public function quiz(Request $request, Task $task, Word $word)
     {
         $user = auth()->user();
 
@@ -156,7 +187,7 @@ class WordsQuizController extends Controller
             'questions' => 'required|integer|max:100',
             'lang' => 'required|max:3',
             'choices' => 'required|integer|min:3|max:9',
-            'level' => 'required|integer|min:1|max:999'
+            'level' => 'required|integer|min:0|max:999'
         ]);
         $projectId = $attributes['book'];
         $range = $this->getRange($attributes['range']);
@@ -165,7 +196,7 @@ class WordsQuizController extends Controller
         $choices = $attributes['choices'];
         $level = $attributes['level'];
 
-        $tasks = $this->getTasks($user, $projectId);
+        $tasks = $task->allTasks($user->id, $projectId);
 
         if (! $tasks || ! $tasks->count()) {
             return ['errors' => '単語帳に単語が登録されていません。'];
@@ -173,7 +204,7 @@ class WordsQuizController extends Controller
         $tasks = $tasks->whereIn('is_complete', $range)
                         ->random($questions);
 
-        $quiz = $this->getQuiz($tasks, $word, $language, $level, $choices);
+        $quiz = $this->getQuiz($tasks, $word, $language, $level, $questions, $choices);
 
         return ['questions' => $quiz];
     }
@@ -189,12 +220,14 @@ class WordsQuizController extends Controller
         $user = auth()->user();
 
         $attributes = $request->validate([
+            'language' => 'required|string|max:3',
             'answers' => 'required|array',
             'answers.*.lemma' => 'required|string|max:100',
             'answers.*.id' => 'required|integer',
         ]);
 
         $answers = $attributes['answers'];
+        $language = $attributes['language'];
 
         $results = [];
         foreach ($answers as $answer) {
@@ -205,7 +238,7 @@ class WordsQuizController extends Controller
             'meaning' => $wordByLemma->enExamples(),
             'meaning_jp' => $wordByLemma->jpDefinitions(),
             'lemma' => $answer['lemma'],
-            'isCorrect' => $this->isCorrect($word, $answer),
+            'isCorrect' => $this->isCorrect($word, $language, $answer),
             'isComplete' => $user->hasComplete($answer['id'])
             ];
         }
@@ -213,9 +246,9 @@ class WordsQuizController extends Controller
         return ['results' => $results];
     }
 
-    public function isCorrect($word, $answer)
+    public function isCorrect($word, $language, $answer)
     {
-        return $word->isCorrect($answer['lemma'], $answer['answer']);
+        return $word->isCorrect($answer['lemma'], $language, $answer['answer']);
     }
 
     public function getRange($range)
@@ -230,19 +263,20 @@ class WordsQuizController extends Controller
         }
     }
 
-    public function getTasks($user, $id)
+    public function getQuiz($tasks, $word, $language, $level, $questionsCount, $choices)
     {
-        if ($id == 'all') {
-            return $user->tasks;
-        }
-        return $user->projects->find($id)->tasks;
-    }
+        $minLevel = $this->getMinLevel($level);
+        $maxLevel = $this->getMaxLevel($level);
+        $words = $word->randomWords($questionsCount, $choices, $minLevel, $maxLevel);
+        $dummiesCount = $choices - 1;
 
-    public function getQuiz($tasks, $word, $language, $level, $choices)
-    {
-        return $tasks->map(function ($task) use ($word, $tasks, $language, $level, $choices) {
-            $definition = $this->getDefinition($task, $language);
-            $dummies = $this->generateDummies($word, $choices - 1, $language, $level);
+        return $tasks->map(function ($task) use ($words, $tasks, $language, $level, $dummiesCount) {
+            $definition = $task->word->synsets->where('lang', $language)->first()->def;
+            $dummies = $words->splice(0, $dummiesCount)
+                ->map(function ($word) use ($language) {
+                    return $word->synsets->where('lang', $language)->first()->def;
+                });
+
             return [
                 'id' => $task->id,
                 'lemma' => $task->lemma,

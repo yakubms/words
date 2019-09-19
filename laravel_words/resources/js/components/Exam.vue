@@ -72,13 +72,16 @@ export default {
     filters: {
         title(level) {
             if (level < 5) {
-                return '小学生レベル';
+                return '';
+                // return '小学生レベル';
             }
             if (level < 20) {
-                return '中学生レベル';
+                return '';
+                // return '中学生レベル';
             }
             if (level < 40) {
-                return '高校生レベル';
+                return '';
+                // return '高校生レベル';
             }
             if (level < 60) {
                 return '大学生レベル';
@@ -107,7 +110,7 @@ export default {
     methods: {
         startTest() {
             this.isLoading = true;
-            // console.log('start test!');
+            console.log('start test!');
             this.get('/api/words/', {
                 level: this.level,
                 language: this.language
@@ -115,7 +118,7 @@ export default {
             this.isLoaded = true;
         },
         async submitAnswer() {
-            // console.log('submitting answer...');
+            console.log('submitting answer...');
             if (this.isLoading || !this.isLoaded) {
                 return null;
             }
@@ -126,6 +129,7 @@ export default {
             let filledAnswers = this.fillBlankAnswers();
             let response = await axios.post('/api/words', {
                 level: this.level,
+                language: this.language,
                 answers: filledAnswers
             });
             console.log(response);

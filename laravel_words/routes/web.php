@@ -10,19 +10,10 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-Route::get('/', function () {
-    return view('app');
-});
+Route::get('/', 'HomeController@index');
 
 Auth::routes();
 
-Route::get('/.well-known/acme-challenge/{filename}', function ($filename) {
-    return file_get_contents(
-        public_path('.well-known/acme-challenge/' . $filename)
-    );
-});
+Route::get('/.well-known/acme-challenge/{filename}', 'HomeController@certify');
 
-Route::get('/{any}', function () {
-    return view('app');
-})->where('any', '.*');
+Route::get('/{any}', 'HomeController@index')->where('any', '.*');

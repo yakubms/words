@@ -122,11 +122,11 @@ export const quizmixin = {
         },
         submitAnswer() {
             this.post('/api/words', {
+                language: this.language,
                 level: this.level,
                 answers: this.answers
             });
         },
-
     },
     filters: {
         questionId(id) {

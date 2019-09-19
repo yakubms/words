@@ -13,7 +13,7 @@ class TasksController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create(Request $request, Word $word)
+    public function create(Request $request, Word $word, Task $task)
     {
         $user = auth()->user();
 
@@ -21,24 +21,26 @@ class TasksController extends Controller
             'file' => 'required|file|mimes:txt,csv|max:1000'
         ]);
 
-        $this->debug_time();
-
         $content = $request->file->get();
         $json = json_decode($request->input('file'));
         [$allowDuplicate, $asComplete] = $this->getUploadOptions($json);
 
-        $this->debug_time();
-        // too slow why??
-        $lemmas = $this->filterLemmas($content, $user, $word, $allowDuplicate);
+        $words = $word->whereLang('eng')->pluck('wordid', 'lemma');
+        $tasks = $task->with(['project' => function ($query) {
+            $query->withTrashed();
+        }, 'word'])->get();
+        $lemmas = $tasks->filter(function ($task) use ($user) {
+            return $task->project->owner_id == $user->id;
+        })->unique('lemma')->pluck('lemma');
 
-        $this->debug_time();
-        $array = $this->processLemmas($lemmas, $asComplete, $user, $word);
+        $filteredLemmas = $this->filterLemmas($content, $words, $tasks, $lemmas, $allowDuplicate);
 
-        $this->debug_time();
+        $array = $this->processLemmas($filteredLemmas, $asComplete, $user, $words);
+
         if (\DB::table('tasks')->insert($array) === false) {
             return ['errors' => 'upload failed'];
         }
-        $this->debug_time();
+
         return ['count' => count($array)];
     }
 
@@ -59,15 +61,13 @@ class TasksController extends Controller
      * @param  array $lemmas from user txt file
      * @return Collection $collection
      */
-    public function filterLemmas($content, $user, $word, $allowDuplicate)
+    public function filterLemmas($content, $words, $tasks, $lemmas, $allowDuplicate)
     {
-        $lemmas = preg_split('/(\r?\n|\s+,\s+)/', trim($content));
+        $data = preg_split('/(\r?\n|\s+,\s+)/', trim($content));
 
-        $this->debug_time();
-
-        return collect($lemmas)
-            ->filter(function ($lemma) use ($user, $word, $allowDuplicate) {
-                return $this->duplicateFilter($user, $lemma, $word, $allowDuplicate);
+        return collect($data)
+            ->filter(function ($datum) use ($words, $lemmas, $allowDuplicate) {
+                return $this->duplicateFilter($datum, $words, $lemmas, $allowDuplicate);
             })->unique()->values();
     }
 
@@ -79,13 +79,13 @@ class TasksController extends Controller
      * @param  [type] $allowDuplicate [description]
      * @return [type]                 [description]
      */
-    public function duplicateFilter($user, $lemma, $word, $allowDuplicate)
+    public function duplicateFilter($datum, $words, $lemmas, $allowDuplicate)
     {
         if ($allowDuplicate) {
-            return $word->exists($lemma);
+            return $words->has($datum);
         }
 
-        return !$user->hasDuplicateWord($word->id($lemma)) and $word->exists($lemma);
+        return $words->has($datum) and !$lemmas->contains($datum);
     }
 
     /**
@@ -102,7 +102,7 @@ class TasksController extends Controller
         return $projectId;
     }
 
-    public function processLemmas($lemmas, $asComplete, $user, $word)
+    public function processLemmas($lemmas, $asComplete, $user, $words)
     {
         $projectId = $user->activeProjectId();
         $projectId = $this->createNextProjectWhenFull($user, $projectId);
@@ -120,7 +120,7 @@ class TasksController extends Controller
 
             $array[] = [
                     'project_id' => $projectId,
-                    'word_id' => $word->id($lemma),
+                    'word_id' => $words->get($lemma),
                     'is_complete' => $asComplete,
                     'created_at' => $now,
                     'updated_at' => $now
@@ -221,34 +221,5 @@ class TasksController extends Controller
     public function revert()
     {
         return;
-    }
-
-    public function debug_time()
-    {
-        $debug = current(debug_backtrace());
-
-        static $start_time = 0;
-        static $pre_debug = null;
-        static $pre_time = 0;
-
-        $time = microtime(true);
-        if (!$start_time) {
-            $start_time = $time;
-        }
-
-        if ($pre_time) {
-            echo sprintf(
-                '<div>[%s(%d) - %s(%d)]: %d ms(ttl:%d ms)</div>',
-                basename($pre_debug['file']),
-                $pre_debug['line'],
-                basename($debug['file']),
-                $debug['line'],
-                ($time * 1000 - $pre_time * 1000),
-                ($time * 1000 - $start_time * 1000)
-        );
-        }
-
-        $pre_debug = $debug;
-        $pre_time = $time;
     }
 }

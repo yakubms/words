@@ -3,12 +3,15 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['project_id', 'word_id', 'is_complete'];
     protected $appends = ['level', 'lemma'];
-    protected $hidden = ['word', 'project_id', 'laravel_through_key'];
+    protected $hidden = ['project_id', 'laravel_through_key'];
 
     public function project()
     {
@@ -23,6 +26,26 @@ class Task extends Model
     public function user()
     {
         return $this->project->user;
+    }
+
+    public function allTasks($userId, $projectId)
+    {
+        if ($projectId === 'all') {
+            return $this->with([
+                'word',
+                'project' => function ($query) use ($userId) {
+                    $query->withTrashed();
+                }])
+            ->whereHas('project', function ($query) use ($userId) {
+                $query->where('owner_id', $userId);
+            })->get();
+        }
+
+        return $this->with(['word', 'project'])
+            ->whereHas('project', function ($query) use ($userId, $projectId) {
+                $query->where('owner_id', $userId)
+                    ->where('project_id', $projectId);
+            })->get();
     }
 
     public function getLemmaAttribute()
@@ -43,15 +66,4 @@ class Task extends Model
     {
         return $this->word->jpDefinitions();
     }
-
-
-    // public function getMeaningAttribute()
-    // {
-    //     return $this->word->enDefinitions()->first();
-    // }
-
-    // public function getMeaningJpAttribute()
-    // {
-    //     return $this->word->jpDefinitions()->first();
-    // }
 }
